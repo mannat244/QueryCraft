@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { AzureOpenAI } from "openai";
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: "AIzaSyDSWm_DfJYuAebhjQy5SgjaBYI2oqRJvns" });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 import mysql from 'mysql2/promise';
 
 const endpoint = process.env.ENDPOINT;
