@@ -9,6 +9,7 @@ const [messages, setmessages] = useState([])
 const [query, setquery] = useState("")
 const [text, settext] = useState("")
 const [output, setoutput] = useState()
+const [table, settable] = useState(false)
 const [loading, setloading] = useState(false)
 const [discuss, setdiscuss] = useState(false)
 const [showtables, setshowtables] = useState(false)
@@ -42,7 +43,9 @@ const handleInput = async() => {
             const data = await response.json();
             setloading(false)
             console.log(data)
+            settable(data.table)
             settext(data.text)
+
             setoutput(JSON.stringify(data))
             
            // setmessages(prev => [...prev, {'sender': 'bot', 'text':data}])
@@ -73,8 +76,8 @@ const handleInput = async() => {
 
             <div className='w-[100%]  text-zinc-300 p-1'>
               {loading && <div className='loader'></div>}
-              {output && <p>{text}</p>}
-          { output && <JsonToTable data={output}/> }
+              {output  && <p>{text}</p>}
+          { output && table && <JsonToTable data={output}/> }
             </div>
         </div>
 

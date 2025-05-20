@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/genai": "^1.0.0",
     "iron-session": "^8.0.4",
     "mysql2": "^3.14.1",
     "next": "15.3.2",
