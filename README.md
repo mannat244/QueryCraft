@@ -2,6 +2,9 @@
 
 **QueryCraft** is an AI-powered query assistant built as a Next.js web application. It allows users to input **natural language questions** and automatically translates them into executable **SQL queries** for a MySQL database. QueryCraft then runs the query against the specified database, displays the results in a table if applicable, and provides a concise textual response.
 
+>Now with Google Gemini API support and enhanced few-shot prompting!
+>QueryCraft supports both Azure OpenAI and Google Gemini, giving you more flexibility and performance. Few-shot examples and refined prompts improve SQL accuracy, especially >on complex queries.
+
 ## Features
 
 * **Natural Language Interface**: Converts plain English questions into SQL queries.
