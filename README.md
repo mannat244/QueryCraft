@@ -60,6 +60,13 @@ App runs at: [http://localhost:3000](http://localhost:3000)
 
    > "Show me all employees in the Sales department."
 4. Receive an AI-generated explanation, underlying SQL query, and tabular results.
+5. ![image](https://github.com/user-attachments/assets/8dd112f3-18e4-4a7d-b1de-d960baa86aa8)
+6. ![image](https://github.com/user-attachments/assets/cf1179fb-ed90-46ff-abbc-2d35fa015459)
+7. ![image](https://github.com/user-attachments/assets/98278070-11bb-4b29-922f-0d2fd4aaf3c6)
+
+
+
+
 
 ## API Endpoints
 
