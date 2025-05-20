@@ -45,6 +45,7 @@ MODELNAME=<model-name>
 DEPLOYMENT=<deployment-name>
 APIVERSION=2023-05-15
 SESSION_PASSWORD=<your-secure-password>
+GEMINI_API_KEY=<your-gemini-api-key>
 ```
 
 4. **Start the Development Server**
