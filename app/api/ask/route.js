@@ -14,7 +14,7 @@ const deployment = process.env.DEPLOYMENT;
 export async function POST(request) {
 
   const session = await getIronSession(request, {}, sessionOptions);
-  const {query} = await request.json()
+  const {query , think} = await request.json()
   console.log(session.dbConfig, query)
 
   const connection = await mysql.createConnection({
@@ -105,6 +105,26 @@ const parsed = JSON.parse(cleaned);
 
   console.log(results);
   console.log(fields); 
+
+  if(think){
+    const prompt = "You are a smart assistant that analyzes SQL query results and provides a clear, helpful explanation based on both the user's question and the data.\n\nYou receive:\n- A natural language query from the user (e.g. “show employee distribution by department”)\n- A result set in JSON format (a list of row objects from a SQL query)\n\nYour task:\n1. Understand the user's intent from their natural query.\n2. Carefully examine the data.\n3. Identify:\n   - Totals, counts, and distributions\n   - Most frequent or dominant values\n   - Groupings and relationships (e.g., departments, roles)\n   - Missing or empty results\n4. Respond with a brief, natural-sounding sentence that helps the user understand the key takeaway.\n\nGuidelines:\n- Use clear and concise English suitable for non-technical users.\n- Emphasize patterns and insights, such as “Most employees are in IT” or “Only one department has more than 5 staff.”\n- If the result is empty or the query yields no data, respond with “No data found.”\n- Return ONLY a single-line response enclosed in double quotes (escaped if needed) — e.g.:\n  \"There are 5 employees across 3 departments. Most are in IT.\"\n\n";
+    const data = JSON.stringify(results);
+    const thinkresponse = await ai.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: `${query} with ${data}`,
+    config: {
+      systemInstruction: `${prompt} ${schema}`,
+    },
+  });
+    
+  
+
+  return NextResponse.json({
+    'output': results,
+    'text':thinkresponse.text.slice(1, -1),
+    'table':parsed.table,
+  })
+  }
   
   return NextResponse.json({
     'output': results,

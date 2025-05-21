@@ -11,9 +11,8 @@ const [text, settext] = useState("")
 const [output, setoutput] = useState()
 const [table, settable] = useState(false)
 const [loading, setloading] = useState(false)
-const [discuss, setdiscuss] = useState(false)
 const [showtables, setshowtables] = useState(false)
-
+const [think, setthink] = useState(false)
 
 const handleInput = async() => {
 
@@ -36,7 +35,7 @@ const handleInput = async() => {
             headers:{
                 'Content-Type':'application/json',
             },
-            body: JSON.stringify({'query':userQuery})
+            body: JSON.stringify({'query':userQuery, 'think':think})
         })
 
         if(response.ok){
@@ -74,18 +73,20 @@ const handleInput = async() => {
       Ask me anything about your database.
     </p> </div>}
 
-            <div className='w-[100%]  text-zinc-300 p-1'>
-              {loading && <div className='loader'></div>}
-              {output  && <p>{text}</p>}
-          { output && table && <JsonToTable data={output}/> }
-            </div>
+        <div className='w-[100%]  text-zinc-300 p-1'>
+          {loading && <div className='loader'></div>}
+          {!think && output && <p>{text}</p>}
+          {output && table && <JsonToTable data={output} />}
+          {think && output && <p className='mt-2'>{text}</p>}
         </div>
+      </div>
 
 
       <div className='bg-zinc-800 h-20 rounded-2xl border absolute flex bottom-2.5 border-zinc-700 px-5 py-2 pt-1 pb-2 w-[80vw]'>
               <div className='flex flex-col w-[100%]'>
                   <input  onKeyDown={e => e.key==='Enter' && handleInput() } onChange={(e)=>{setinput(e.target.value)}} type='text' value={input} className='w-[90%] mt-1 ml-2 font-normal text-zinc-200 focus:outline-none outline-none ' placeholder="Craft Your Queries..." />
-                  <div className='w-[90%] mt-3 hidden flex text-sm text-zinc-500 font-normal gap-1.5'><span className='cursor-pointer border border-zinc-500 p-1 rounded-2xl'>Show Tables</span><span className='cursor-pointer border border-zinc-500 p-1 rounded-2xl'>Discuss Mode</span>
+                  <div className='w-[90%] mt-3  flex text-sm text-zinc-500 font-normal gap-1.5'><span onClick={()=>{setthink(!think) 
+                    setoutput("")}} className={`cursor-pointer border border-zinc-500 p-1 rounded-2xl ${think ? 'bg-zinc-500 text-zinc-800' : ''}`}>Think Mode</span>
                   </div>
              </div>
                     <img onClick={handleInput} className='cursor-pointer h-10 m-auto bg-white rounded-3xl p-1.5' src='/send.png' />      
