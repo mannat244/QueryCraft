@@ -1,45 +1,75 @@
 "use client";
+
 import React from "react";
 
 function JsonToTable({ data }) {
-  let parsedData;
+  // 1. Normalize to string & strip accidental "use client" bits
+  const raw = typeof data === "string" ? data.trim() : data;
+  const cleaned =
+    typeof raw === "string"
+      ? raw.replace(/^["']?use client["']?;?/i, "").trim()
+      : raw;
 
-  try {
-    parsedData = typeof data === "string" ? JSON.parse(data) : data;
-  } catch (err) {
-    return <p className="text-red-500">Invalid JSON data</p>;
+  // 2. If it’s still just plain text, render it directly
+  if (typeof cleaned === "string" && !cleaned.startsWith("{")) {
+    return <p className="text-gray-700 whitespace-pre-wrap">{cleaned}</p>;
   }
 
-  if (!Array.isArray(parsedData.output) || parsedData.output.length === 0) {
+  // 3. Try to parse JSON
+  let parsed;
+  try {
+    parsed = typeof cleaned === "string" ? JSON.parse(cleaned) : cleaned;
+  } catch {
     return (
-      <p className="text-gray-400">
-        Hmm, I couldn’t generate a valid response for that. Try rewording your question or adding more detail?
+      <p className="text-red-500">
+        Invalid JSON — I couldn’t understand that response. Double-check the format?
       </p>
     );
   }
 
-  const headers = Object.keys(parsedData.output[0]);
+  // 4. No `output` field at all?
+  if (!parsed || !Array.isArray(parsed.output)) {
+    return (
+      <p className="text-gray-500">
+        🤔 Hmm, I was expecting an array under “output” but didn’t find one. Can you
+        adjust your prompt or data shape?
+      </p>
+    );
+  }
+
+  // 5. Empty array
+  if (parsed.output.length === 0) {
+    return (
+      <p className="text-gray-400">
+        No records to display—I got an empty list back. Try a different query or add
+        more details.
+      </p>
+    );
+  }
+
+  // 6. Build headers & rows
+  const headers = Object.keys(parsed.output[0]);
 
   return (
-    <table className="border-collapse border border-gray-300 w-full text-left mt-2">
-      <thead>
+    <table className="w-full border border-gray-300 mt-2 text-left">
+      <thead className="bg-gray-100">
         <tr>
-          {headers.map((header) => (
+          {headers.map((h) => (
             <th
-              key={header}
-              className="border border-gray-300 px-4 py-2 bg-gray-100 text-zinc-700"
+              key={h}
+              className="border border-gray-300 px-4 py-2 text-zinc-700"
             >
-              {header}
+              {h}
             </th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {parsedData.output.map((row, rowIndex) => (
-          <tr key={rowIndex}>
-            {headers.map((header) => (
-              <td key={header} className="border border-gray-300 px-4 py-2">
-                {row[header]}
+        {parsed.output.map((row, i) => (
+          <tr key={i}>
+            {headers.map((h) => (
+              <td key={h} className="border border-gray-300 px-4 py-2">
+                {String(row[h] ?? "")}
               </td>
             ))}
           </tr>

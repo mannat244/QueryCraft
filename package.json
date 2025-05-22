@@ -10,12 +10,14 @@
   },
   "dependencies": {
     "@google/genai": "^1.0.0",
+    "@pinecone-database/pinecone": "^6.0.1",
     "iron-session": "^8.0.4",
     "mysql2": "^3.14.1",
     "next": "15.3.2",
     "openai": "^4.100.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-toastify": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
