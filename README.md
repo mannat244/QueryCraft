@@ -2,22 +2,25 @@
 
 **QueryCraft** is an AI-powered query assistant built as a Next.js web application. It allows users to input **natural language questions** and automatically translates them into executable **SQL queries** for a MySQL database. QueryCraft then runs the query against the specified database, displays the results in a table if applicable, and provides a concise textual response.
 
->Now with Google Gemini API support and enhanced few-shot prompting!
->QueryCraft supports both Azure OpenAI and Google Gemini, giving you more flexibility and performance. Few-shot examples and refined prompts improve SQL accuracy, especially >on complex queries.
+>Now powered by Google Gemini API with Pinecone vector embeddings!
+>QueryCraft uses Google Gemini for natural language processing and Microsoft E5-Large embeddings via Pinecone for intelligent schema retrieval, delivering enhanced accuracy on complex queries.
 
 ## Features
 
 * **Natural Language Interface**: Converts plain English questions into SQL queries.
-* **AI Backend**: Utilizes Azure OpenAI to generate SQL based on user queries and the current database schema.
-* **Schema-Aware Querying**: Dynamically retrieves schema (tables, columns, and relations) to ensure SQL accuracy.
-* **Dynamic SQL Execution**: Executes queries and retrieves live results from the user’s MySQL database.
+* **AI Backend**: Utilizes Google Gemini API to generate SQL based on user queries and the current database schema.
+* **Schema-Aware Querying**: Dynamically retrieves schema (tables, columns, and relations) to ensure SQL accuracy with intelligent schema handling based on size.
+* **Dynamic SQL Execution**: Executes queries and retrieves live results from the user's MySQL database.
+* **Transparent SQL Display**: Shows the generated SQL query alongside results for full transparency.
+* **Think Mode**: Advanced post-query analysis mode for deeper insights and query optimization.
 * **Responsive UI**: Chat interface displays both assistant responses and results in a tabular format.
 * **Session-Based Database Setup**: Uses encrypted sessions to securely store and reuse user-provided DB credentials.
 
 ## Technology Stack
 
 * **Frontend**: Next.js (React), Tailwind CSS
-* **Backend**: Next.js API routes, Azure OpenAI, MySQL (via `mysql2/promise`)
+* **Backend**: Next.js API routes, Google Gemini API, MySQL (via `mysql2/promise`)
+* **Vector Database**: Pinecone with Microsoft E5-Large embeddings for schema retrieval
 * **Session Management**: `iron-session` for secure session handling
 
 ## Installation
@@ -39,13 +42,27 @@ npm install
    Create a `.env.local` file with the following:
 
 ```env
-ENDPOINT=<azure-openai-endpoint>
-APIKEY=<azure-api-key>
-MODELNAME=<model-name>
-DEPLOYMENT=<deployment-name>
-APIVERSION=2023-05-15
+# Session Management
 SESSION_PASSWORD=<your-secure-password>
+
+# Google Gemini API (Primary AI)
 GEMINI_API_KEY=<your-gemini-api-key>
+
+# Pinecone Vector Database
+PINECONE_APIKEY=<your-pinecone-api-key>
+INDEX_NAME=schemaindex
+
+# Database SSL Certificate (if required)
+DB_SSL_CA="-----BEGIN CERTIFICATE-----
+<your-ssl-certificate-content>
+-----END CERTIFICATE-----"
+
+# Azure OpenAI (currently not in use, kept for future compatibility)
+ENDPOINT=https://23112--eastus2..azure./
+MODELNAME=o3-mini
+DEPLOYMENT=o3-mini
+APIKEY=<azure-api-key>
+APIVERSION=2024-12--preview
 ```
 
 4. **Start the Development Server**
@@ -63,22 +80,58 @@ App runs at: [http://localhost:3000](http://localhost:3000)
 3. Ask natural language questions like:
 
    > "Show me all employees in the Sales department."
-4. Receive an AI-generated explanation, underlying SQL query, and tabular results.
-5. ![image](https://github.com/user-attachments/assets/8dd112f3-18e4-4a7d-b1de-d960baa86aa8)
-6. ![image](https://github.com/user-attachments/assets/cf1179fb-ed90-46ff-abbc-2d35fa015459)
-7. ![image](https://github.com/user-attachments/assets/98278070-11bb-4b29-922f-0d2fd4aaf3c6)
+4. Receive an AI-generated explanation, the actual SQL query used, and tabular results.
+5. Use **Think Mode** by setting `think: true` in your request for advanced post-query analysis and insights.
+6. ![image](https://github.com/user-attachments/assets/7caa52df-e314-44bd-a036-9b74210a78c4)
 
+7. ![image](https://github.com/user-attachments/assets/a28bf408-5959-4bd0-ba98-81f9d565dbeb)
 
+8. ![image](https://github.com/user-attachments/assets/7d36ea33-744c-4ca0-90ba-ee3d9c44043b)
 
 
 
 ## API Endpoints
 
-### POST `/api/db`
+### POST `/api/ask` — Query Processing
+Accepts JSON payload with natural language query and processes it using AI.
 
-Stores the DB configuration in the session.
+**Features:**
+* Uses session DB config (MySQL or MongoDB)
+* For MySQL, establishes connection with optional SSL
+* Intelligent schema handling: fetches complete schema if under 8K tokens, otherwise relies on Pinecone vector DB for relevant schema retrieval
+* Calls AI to convert query to SQL with schema awareness
+* Executes SQL and returns results with explanations
+* **Think Mode**: Optional boolean parameter (`think: true`) enhances the response text with deeper analysis and optimization insights
+* Displays generated SQL query for full transparency
+* MongoDB support not yet available (returns friendly message)
+
 **Body:**
+```json
+{
+  "query": "List all orders from 2023",
+  "think": true
+}
+```
 
+**Response:**
+```json
+{
+  "output": [...],
+  "text": "Here are the orders from 2023. This query efficiently filters orders by year using the YEAR() function...",
+  "sql": "SELECT * FROM orders WHERE YEAR(order_date) = 2023",
+  "table": true
+}
+```
+
+### POST `/api/db` — Set Database Configuration
+Stores database configuration in user session.
+
+**Features:**
+* Accepts JSON for DB config or MongoDB connection string
+* Stores config in user session
+* Supports switching between MySQL and MongoDB
+
+**Body:**
 ```json
 {
   "host": "db.example.com",
@@ -89,26 +142,39 @@ Stores the DB configuration in the session.
 }
 ```
 
-### POST `/api/ask`
+### POST `/api/schema` — Schema Embedding and Indexing
+Handles schema extraction and vector indexing for improved query accuracy.
 
-Handles user questions, generates SQL, runs it, and returns output.
-**Body:**
+**Features:**
+* Connects to MySQL using session DB config
+* Extracts comprehensive schema info (tables, columns, relations)
+* Intelligent schema processing: 
+  - **Small schemas (≤8K tokens)**: Complete schema sent directly with queries for optimal accuracy
+  - **Large schemas (>8K tokens)**: Schema embedded using Microsoft E5-Large model and indexed in Pinecone vector DB for semantic retrieval
+* Indexes vectors under session database namespace for isolation
 
-```json
-{
-  "query": "List all orders from 2023"
-}
-```
+### POST `/api/logout` — Logout User
+Destroys the current user session and clears stored database configurations.
+
+### GET `/api/session` — Check Session
+Returns current session status and database configuration.
 
 **Response:**
-
 ```json
 {
-  "output": [...],
-  "text": "Here are the orders from 2023.",
-  "table": true
+  "dbConfig": {...},
+  "connectionStatus": "connected"
 }
 ```
+
+## Workflow
+
+The typical workflow follows this sequence:
+1. **`/db`** → Set database configuration
+2. **`/schema`** → Extract and index schema information
+3. **`/ask`** → Process natural language queries
+
+Both `/session` and `/logout` endpoints help maintain session persistence throughout the user experience.
 
 ## Architecture Overview
 
@@ -120,12 +186,15 @@ Handles user questions, generates SQL, runs it, and returns output.
 2. **API Layer**:
 
    * `/api/db` saves DB config
-   * `/api/ask` fetches schema, prompts Azure OpenAI, executes SQL, returns result
+   * `/api/schema` extracts schema and creates embeddings using Microsoft E5-Large
+   * `/api/ask` processes queries using Gemini API with intelligent schema retrieval
 
 3. **AI Integration**:
 
-   * Azure OpenAI receives full schema + user question
-   * Returns structured JSON: `{ "text", "sql", "table" }`
+   * Google Gemini API receives user question with contextually relevant schema information
+   * For small schemas (≤8K tokens): Complete schema included with query
+   * For large schemas (>8K tokens): Pinecone vector search with Microsoft E5-Large embeddings retrieves most relevant schema portions
+   * Returns structured JSON with text explanation (enhanced with analysis when think mode is enabled), SQL query, and results: `{ "text", "sql", "table" }`
 
 4. **MySQL Execution**:
 
