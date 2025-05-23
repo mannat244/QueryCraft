@@ -192,8 +192,8 @@ Both `/session` and `/logout` endpoints help maintain session persistence throug
 3. **AI Integration**:
 
    * Google Gemini API receives user question with contextually relevant schema information
-   * For small schemas (≤8K tokens): Complete schema included with query
-   * For large schemas (>8K tokens): Pinecone vector search with Microsoft E5-Large embeddings retrieves most relevant schema portions
+   * For small schemas (≤8K chars): Complete schema included with query
+   * For large schemas (>8K chars): Pinecone vector search with Microsoft E5-Large embeddings retrieves most relevant schema portions
    * Returns structured JSON with text explanation (enhanced with analysis when think mode is enabled), SQL query, and results: `{ "text", "sql", "table" }`
 
 4. **MySQL Execution**:
