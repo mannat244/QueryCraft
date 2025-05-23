@@ -200,6 +200,26 @@ Both `/session` and `/logout` endpoints help maintain session persistence throug
 
    * SQL executed using `mysql2/promise`
    * Results returned to frontend for rendering
+## Future Scope
+
+QueryCraft is evolving quickly to meet developer and analyst needs. Upcoming improvements include:
+
+1. **Session History & Follow-Up Questions**  
+   Enable persistent session history to support context-aware follow-up queries and maintain conversational continuity. This will allow users to build on previous questions naturally, similar to how they interact in a typical chat with an assistant.
+
+2. **Open Source LLM Integration**  
+   Replace or complement the Google Gemini API with open-source LLMs (like LLaMA, Mistral, or Mixtral) to provide greater control, customization, and reduce dependency on third-party APIs. This can also enhance offline deployment options.
+
+3. **Open Source Vector Database**  
+   Integrate with open-source alternatives to Pinecone (such as **Weaviate**, **Qdrant**, or **FAISS**) to lower costs and increase flexibility in embedding storage and search strategies.
+
+4. **Improved Error Handling and Robustness**  
+   Enhance backend resilience by implementing:
+   - Detailed error reporting for failed SQL executions
+   - Schema parsing failures
+   - Network issues
+   - Graceful fallbacks for AI output failures  
+   This ensures a more reliable and user-friendly experience across various edge cases and deployment environments.
 
 ## Contribution
 
