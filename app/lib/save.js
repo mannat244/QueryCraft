@@ -2,7 +2,6 @@ import { getIronSession } from 'iron-session';
 import { sessionOptions } from '../../lib/session';
 import { NextResponse } from 'next/server';
 import { AzureOpenAI } from "openai"; 
-import Groq from "groq-sdk";
 import ollama from 'ollama'
 
 import { GoogleGenAI } from "@google/genai";
@@ -12,27 +11,23 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 import mysql from 'mysql2/promise';
 const pc = new Pinecone({ apiKey: process.env.PINECONE_APIKEY });
 
-//AZURE VARIABLES 
 const endpoint = process.env.ENDPOINT;
 const modelName = process.env.MODELNAME;
 const deployment = process.env.DEPLOYMENT;
 
-export async function POST(request) {  
-  
-  let llm_response;
-  let parsed_response;
-  let sql_query;
-  
+export async function POST(request) {
+
   const session = await getIronSession(request, {}, sessionOptions);
   const {query , think, llm} = await request.json()
 
   let local_response;
   let parsed_local;
   let response;
+  
 
   console.log(session.dbConfig, query)
   
-  let connection;
+  let connection
   
   if(session.dbConfig.type == "mongoDB") {
 
@@ -43,29 +38,18 @@ export async function POST(request) {
   })
 
   } else {
-
-    try{
-      connection = await mysql.createConnection({
-          host: session.dbConfig.host,
-          user: session.dbConfig.user,
-          database: session.dbConfig.database,
-          password: session.dbConfig.password,
-          port: session.dbConfig.port,
-          ...(session.dbConfig.ssl && {
-            ssl: {
-              ca: process.env.DB_SSL_CA?.replace(/\\n/gm, '\n'),
-            }
-          })
-        });
-    } catch(err) {
-      return NextResponse.json({
-        'output': "",
-        'err': err,
-        "sql": "",
-        'text': "Error making connection to the database. Please check if your database is live and try reconnecting. If the issue persists, verify your credentials and network settings.",
-        'table': false,
-      })
+  connection = await mysql.createConnection({
+  host: session.dbConfig.host,
+  user: session.dbConfig.user,
+  database: session.dbConfig.database,
+  password: session.dbConfig.password,
+  port: session.dbConfig.port,
+  ...(session.dbConfig.ssl && {
+    ssl: {
+      ca: process.env.DB_SSL_CA?.replace(/\\n/gm, '\n'),
     }
+  })
+});
   }
 
 const index = pc.index("schemaindex");
@@ -76,7 +60,7 @@ const embedding = await pc.inference.embed(
   { inputType: 'query' }
 );
   
-const queryResponse = await index.namespace(session.dbConfig.database).query({
+ const queryResponse = await index.namespace(session.dbConfig.database).query({
   topK: 10,
   vector: embedding.data[0].values,
   includeValues: true,
@@ -154,27 +138,6 @@ async function fetchSchemaQuoted(connection, database, maxLength = 1600) {
   const apiKey = process.env.APIKEY;
   const apiVersion = process.env.APIVERSION;
   const options = { endpoint, apiKey, deployment, apiVersion }
-
-const prompt_start = `
-You are QueryCraft, an intelligent AI assistant that converts natural language requests into accurate and safe MySQL queries for a MySQL database. You also return a helpful explanation for users based on the query.
-
-Your behavior must follow this structure:
-
-Return ONLY a valid JSON object with the following fields:
-
-{ "text": string, // A helpful message to show the user about the query or result
-  "sql": string,// The complete SQL query string (must end with a semicolon)
-  "table": boolean // true if the query returns tabular data, false if not }
-
-SQL Rules:
-- Do not use PostgreSQL-specific syntax like ILIKE, RETURNING, ::type, or SERIAL.
-- Use LOWER(column) LIKE for case-insensitive searches.
-- Use backticks for identifiers (e.g., \\\`table_name\\\`) in MySQL if needed.
-- Do not use FULL OUTER JOIN; MySQL doesn’t support it directly.
-- Avoid WITH clauses unless MySQL 8.0+ is confirmed.
-- STRICTLY use exact table and column name casing as provided in the embedded schema.
-
-You will follow the following schema for returing response `
   
 const prompt = `
 Schema-awareness:
@@ -320,124 +283,97 @@ GROUP BY p.ProductName  
 ORDER BY UnitsSold DESC
 LIMIT 1;`;
 
-try{
-
-if(llm == "Local"){
+if(llm == "local"){
       
-      llm_response = await ollama.generate({
-      model: process.env.LOCAL_MODEL,
-       prompt:`The user query is: ${query} schema: ${schemaString}`,
-       system: ` ${prompt_start} ${schema} ${prompt}`,
+      local_response = await ollama.generate({
+      model: 'gemma3:4b',
+       prompt:`The user query is: ${query} , you have to strictly (even the case) follow the schema: complete ${schemaString}`,
+       system: `${prompt}, keep names of table exact as schema the database schema is ${schemaBlock}`,
        format: "json",
     })
-    console.log(llm_response.response)
-    const cleaned = llm_response.response
+    console.log(local_response.response)
+    const cleaned = local_response.response
       // .replace(/^```json\s*/, '')  // remove ```json and any following newlines
       // .replace(/```$/, '');        // remove ending triple backticks
 
     // Parse the JSON
-    parsed_response = JSON.parse(cleaned);
+    parsed_local = JSON.parse(cleaned);
+}
 
-} else if(llm == "Gemini") { 
 
-llm_response = await ai.models.generateContent({
+   response = await ai.models.generateContent({
     model: "gemini-2.0-flash",
     contents: `${query} , you have to strictly follow the schema: ${schema} complete ${schemaString}`,
     config: {
-      systemInstruction: `${prompt_start} ${schema} ${prompt}` ,
+      systemInstruction: `
+You are QueryCraft, an intelligent AI assistant that converts natural language requests into accurate and safe MySQL queries for a MySQL database. You also return a helpful explanation for users based on the query.
+
+Your behavior must follow this structure:
+
+Return ONLY a valid JSON object with the following fields:
+
+{ "text": string, // A helpful message to show the user about the query or result
+  "sql": string,// The complete SQL query string (must end with a semicolon)
+  "table": boolean // true if the query returns tabular data, false if not }
+
+SQL Rules:
+- Do not use PostgreSQL-specific syntax like ILIKE, RETURNING, ::type, or SERIAL.
+- Use LOWER(column) LIKE for case-insensitive searches.
+- Use backticks for identifiers (e.g., \\\`table_name\\\`) in MySQL if needed.
+- Do not use FULL OUTER JOIN; MySQL doesn’t support it directly.
+- Avoid WITH clauses unless MySQL 8.0+ is confirmed.
+- STRICTLY use exact table and column name casing as provided in the embedded schema.
+
+You will follow the following schema for returing response ${schema} ${prompt}` ,
     },
   });
 
-  console.log(llm_response.text);
+  console.log(response.text);
 
-  const cleaned = llm_response.text
+  const cleaned = response.text
   .replace(/^```json\s*/, '')  // remove ```json and any following newlines
   .replace(/```$/, '');        // remove ending triple backticks
 
 // Parse the JSON
-  parsed_response = JSON.parse(cleaned);
-} else if(llm == "Azure") {
+  const parsed = JSON.parse(cleaned);
 
-  const client = new AzureOpenAI(options);
 
-   const response = await client.chat.completions.create({
-    messages: [
-      { role:"system", content: `${prompt_start} ${schema} ${prompt}` },
-      { role:"user", content: `query is: ${query} schema ${schema}` }
-    ],
-    max_completion_tokens: 1000,
-      model: modelName
-  });
+//******* OPEN AI SDK**********/
 
-  if (response?.error !== undefined && response.status !== "200") {
-    throw response.error;
+  // const client = new AzureOpenAI(options);
+
+  //  const response = await client.chat.completions.create({
+  //   messages: [
+  //     { role:"system", content: ` ${prompt}` },
+  //     { role:"user", content: `query is: ${query} schema ${schema}` }
+  //   ],
+  //   max_completion_tokens: 1000,
+  //     model: modelName
+  // });
+
+  // if (response?.error !== undefined && response.status !== "200") {
+  //   throw response.error;
+  // }
+  // console.log(response.choices[0].message.content); 
+  // const responseAI = await JSON.parse(response.choices[0].message.content);
+
+  let parsed_query;
+
+  if(llm == "local"){
+    parsed_query = parsed_local.sql;
+    console.log(parsed_query)
+  } else {
+    parsed_query = parsed.sql;
+    console.log(parsed_query)
   }
-  console.log(response.choices[0].message.content); 
-  parsed_response = await JSON.parse(response.choices[0].message.content);
 
-} else {
-
-  let model = "";
-
-  if(llm == "Qwen 3")
-    model ="qwen/qwen3-32b"
-  else if( llm == "DeepSeek R1 Distill")
-    model = "deepseek-r1-distill-llama-70b"
-  else if( llm == "Mistral")
-    model = "mistral-saba-24b"
-//qwen-qwq-32b
-
-const groq = new Groq();
-
-const chatCompletion = await groq.chat.completions.create({
-  "messages": [
-    {
-      "role": "system",
-      "content": `${prompt_start} ${schema} ${prompt}`
-    },
-    {
-      "role": "user",
-      "content": `${query} , you have to strictly follow the schema: ${schema} complete ${schemaString}`
-    }
-  ],
-  "model": model,
-  "temperature": 0.6,
-  "max_completion_tokens": 4096,
-  "top_p": 0.95,
-  "stream": false,
-  "response_format": {
-    "type": "json_object"
-  },
-  "stop": null
-});
-
-llm_response = chatCompletion.choices[0].message.content;
-console.log(chatCompletion.choices[0].message.content);
-
-try {
-parsed_response = JSON.parse(llm_response)
-} catch {
-parsed_response = JSON.parse(llm_response.error.failed_generation)
-}
-
-}} catch(err) {
-  
-       return NextResponse.json({
-          'output': "",
-          'err':JSON.stringify(err),
-          "sql":"",
-          'text':"Failed to generate response. Consider switching to the Gemini model for better results." ,
-          'table':false,  })
-   
-   
-
-}
-
-  sql_query = parsed_response.sql;
+ 
 
   try {
-  if(!sql_query) throw new Error("No SQL")
-  const [results, fields] = await connection.query(sql_query);
+  
+  
+
+  const [results, fields] = await connection.query(parsed_query);
 
   console.log(results);
   console.log(fields); 
@@ -462,11 +398,20 @@ parsed_response = JSON.parse(llm_response.error.failed_generation)
     })
   }
   
+   if(llm == "local"){
+        return NextResponse.json({
+        'output': results,
+        "sql":parsed_local.sql,
+        'text':parsed_local.text,
+        'table':parsed_local.table,
+      })
+  }
+
   return NextResponse.json({
     'output': results,
-    "sql":parsed_response.sql,
-    'text':parsed_response.text  ,
-    'table':parsed_response.table,
+    "sql":parsed.sql,
+    'text':parsed.text  ,
+    'table':parsed.table,
   })
 
 } catch (err) {
@@ -476,9 +421,9 @@ parsed_response = JSON.parse(llm_response.error.failed_generation)
   return NextResponse.json({
     'output': "",
     'err':JSON.stringify(err),
-    "sql":parsed_response.sql,
-    'text':parsed_response.text ,
-    'table':parsed_response.table,
+    "sql":parsed.sql,
+    'text':parsed.text ,
+    'table':parsed.table,
   })
 }
   

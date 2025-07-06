@@ -68,7 +68,8 @@ export default function Home() {
   "port": 3306,
   "user": "your_username",
   "password": "your_password",
-  "database": "your_database"
+  "database": "your_database",
+  "ssl": false
 }
 )
 
@@ -153,13 +154,14 @@ export default function Home() {
 
   }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setformData((prev) => ({
-      ...prev,
-      [name]: name === "port" ? parseInt(value, 10) || 0 : value
-    }));
-  };
+ const handleChange = (e) => {
+  const { name, value, type, checked } = e.target;
+  setformData((prev) => ({
+    ...prev,
+    [name]: type === "checkbox" ? checked : name === "port" ? parseInt(value, 10) || 0 : value,
+  }));
+};
+
 
   const handleUrlChange = (e) => {
       seturl(e.target.value);
@@ -198,6 +200,20 @@ export default function Home() {
             />
           </div>
         ))}
+
+   <div className="mb-5 flex items-center">
+        <input
+          type="checkbox"
+          id="ssl"
+          name="ssl"
+          checked={formData.ssl}
+          onChange={handleChange}
+          className="h-4 w-4 text-blue-600 bg-zinc-900 border border-zinc-600 rounded focus:ring-blue-500 focus:ring-2"
+        />
+        <label htmlFor="ssl" className="ml-2 block text-sm font-medium text-white select-none">
+          Use SSL (add your CA in .env)
+        </label>
+      </div>
 
         <button type="submit" className="bg-blue-500 px-3 py-1.5 rounded-md font mt-5 active:bg-blue-600 cursor-pointer" >Get Started</button>
       </form> }

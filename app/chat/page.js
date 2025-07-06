@@ -6,7 +6,14 @@ import { ToastContainer, toast, Bounce } from 'react-toastify';
 import CodeBlock from '../components/CodeBlock'
 const page = () => {
 
-const llms = ['Gemini', 'GPT-4', 'Claude', 'Mistral', 'Groq'];
+const llms = [
+  'Gemini',
+  'Local (Ollama)',
+  'Azure',
+  'Qwen 3',
+  'DeepSeek R1 Distill',
+  'Mistral Saba'
+];
 const notify = () => { toast.error('DB Disconnected!', {
 position: "top-center",
 autoClose: 5000,
@@ -19,6 +26,17 @@ theme: "dark",
 transition: Bounce,
 }); }
     
+const copied = () => { toast.success('Query Copied!', {
+position: "top-center",
+autoClose: 5000,
+hideProgressBar: false,
+closeOnClick: false,
+pauseOnHover: true,
+draggable: true,
+progress: undefined,
+theme: "dark",
+transition: Bounce,
+}); }
 const [input, setinput] = useState("")
 const [selectedLLM, setSelectedLLM] = useState('Gemini');
 const [open, setOpen] = useState(false);
@@ -60,7 +78,7 @@ const handleInput = async() => {
             headers:{
                 'Content-Type':'application/json',
             },
-            body: JSON.stringify({'query':userQuery, 'think':think})
+            body: JSON.stringify({'query':userQuery, 'think':think , 'llm':selectedLLM})
         })
 
         if(response.ok){
@@ -124,7 +142,8 @@ const handleInput = async() => {
 
 
          <div className='w-[80vw] h-[100%] my-auto flex flex-col gap-2.5 overflow-y-scroll overflow-x-scroll mcontainer mb-[90px] pt-3'>
-          {query &&  <div className='max-w-[70%] w-fit text-zinc-300 flex items-center justify-start ml-auto mr-2 bg-zinc-700 rounded-2xl rounded-br-[0px] px-3 py-1.5'>
+          {query &&  <div onClick={()=>{ navigator.clipboard.writeText(query)
+             copied()  }} className='max-w-[70%] w-fit text-zinc-300 flex items-center justify-start ml-auto mr-2 bg-zinc-700 rounded-2xl rounded-br-[0px] px-3 py-1.5'>
             {query} 
             </div> }
 
@@ -137,7 +156,7 @@ const handleInput = async() => {
         <div className='w-[fit] overflow-x-scroll mcontainer text-zinc-300 p-1'>
           {loading && <div className='loader'></div>}
           {!think && output && <p>{text}</p>}
-          {output && <CodeBlock code={sql} />}
+          {output && sql && <CodeBlock code={sql} />}
               {output && table && (
         <div className="overflow-x-auto mb-5 w-full scrollbar-dark">
           <JsonToTable className="min-w-max" data={output} />
@@ -148,10 +167,10 @@ const handleInput = async() => {
       </div>
 
 
-      <div className='bg-zinc-800 h-20 rounded-2xl border absolute flex bottom-2.5 border-zinc-700 px-5 py-2 pt-1 pb-2 w-[80vw]'>
-              <div className='flex flex-col w-[100%]'>
+      <div className='bg-zinc-800 h-20 rounded-2xl border absolute flex bottom-2.5 border-zinc-700 px-5  pt-1 pb-0 w-[80vw]'>
+              <div className='flex flex-col mt-3 w-[100%]'>
                   <input  autoFocus onKeyDown={e => e.key==='Enter' && handleInput() } onChange={(e)=>{setinput(e.target.value)}} type='text' value={input} className='w-[90%] mt-1 ml-2 font-normal text-zinc-200 focus:outline-none outline-none ' placeholder="Craft Your Queries..." />
-                  <div className='w-[90%] mt-3  flex text-sm text-zinc-500 font-normal gap-1.5'><span onClick={()=>{setthink(!think) 
+                  <div className='hidden w-[90%] mt-3  text-sm text-zinc-500 font-normal gap-1.5'><span onClick={()=>{setthink(!think) 
                     setoutput("") 
                     setinput("")}} className={`cursor-pointer border border-zinc-500 p-1 rounded-2xl ${think ? 'bg-zinc-500 text-zinc-800' : ''}`}>Think Mode</span>
                   </div>

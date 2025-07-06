@@ -17,9 +17,11 @@ export async function POST(request) {
     database: session.dbConfig.database,
     password: session.dbConfig.password,
     port:     session.dbConfig.port,
+...(session.dbConfig.ssl && {
     ssl: {
-    ca: process.env.DB_SSL_CA?.replace(/\\n/gm, '\n'),
-  },
+      ca: process.env.DB_SSL_CA?.replace(/\\n/gm, '\n'),
+    }
+  })
   });
 
   async function fetchSchemaQuoted(connection, database) {
