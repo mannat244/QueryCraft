@@ -1,0 +1,39 @@
+# ============================================
+# QueryCraft Environment Configuration
+# ============================================
+# Copy this file to server/src/.env and fill in your values
+
+# Session & Security
+SESSION_PASSWORD=your_session_password_here
+
+# Database Configuration (REQUIRED)
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_db_password
+DB_NAME=your_database_name
+DB_SSL_CA=""
+
+# Azure OpenAI (Optional)
+AZURE_ENDPOINT=https://your-resource.azure.com/
+AZURE_MODELNAME=o3-mini
+AZURE_DEPLOYMENT=o3-mini
+AZURE_APIKEY=your_azure_api_key_here
+AZURE_APIVERSION=2024-12-01-preview
+
+# Google Gemini (Optional)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Groq (Recommended - Default LLM)
+GROQ_API_KEY=your_groq_api_key_here
+
+# Pinecone Vector DB (Optional - for cloud vector storage)
+PINECONE_APIKEY=your_pinecone_api_key_here
+PINECONE_INDEX_NAME=schemaindex
+
+# Local Ollama Model (Optional)
+LOCAL_MODEL=gemma3:4b
+
+# Server Configuration
+PORT=4000
+NODE_ENV=development

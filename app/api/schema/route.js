@@ -1,96 +1,45 @@
 import { getIronSession } from 'iron-session';
 import { sessionOptions } from '../../lib/session';
 import { NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
-import { GoogleGenAI } from "@google/genai";
-import { Pinecone } from '@pinecone-database/pinecone';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const pc = new Pinecone({ apiKey: process.env.PINECONE_APIKEY });
 
 export async function POST(request) {
   const session = await getIronSession(request, {}, sessionOptions);
+  let body = {};
+  try { body = await request.json(); } catch (e) { }
 
-  const connection = await mysql.createConnection({
-    host:     session.dbConfig.host,
-    user:     session.dbConfig.user,
-    database: session.dbConfig.database,
-    password: session.dbConfig.password,
-    port:     session.dbConfig.port,
-...(session.dbConfig.ssl && {
-    ssl: {
-      ca: process.env.DB_SSL_CA?.replace(/\\n/gm, '\n'),
-    }
-  })
-  });
-
-  async function fetchSchemaQuoted(connection, database) {
-    const [cols] = await connection.query(
-      `SELECT TABLE_NAME, COLUMN_NAME
-       FROM information_schema.COLUMNS
-       WHERE TABLE_SCHEMA = ?`,
-      [database]
-    );
-
-    const tables = {};
-    for (const { TABLE_NAME, COLUMN_NAME } of cols) {
-      if (!tables[TABLE_NAME]) tables[TABLE_NAME] = [];
-      tables[TABLE_NAME].push(COLUMN_NAME);
-    }
-
-    const [rels] = await connection.query(
-      `SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
-       FROM information_schema.KEY_COLUMN_USAGE
-       WHERE TABLE_SCHEMA = ? AND REFERENCED_TABLE_NAME IS NOT NULL`,
-      [database]
-    );
-
-    const relations = rels.map(r => ({
-      from: `${r.TABLE_NAME}.${r.COLUMN_NAME}`,
-      to:   `${r.REFERENCED_TABLE_NAME}.${r.REFERENCED_COLUMN_NAME}`
-    }));
-
-    return { tables, relations };
+  if (!session.dbConfig) {
+    return NextResponse.json({ status: 500, error: "Not connected" });
   }
 
-  const dbName = session.dbConfig.database;
-  const parsedSchema = await fetchSchemaQuoted(connection, dbName);
-
-  const tableTexts = Object.entries(parsedSchema.tables).map(([table, columns]) => ({
-    id:      `${dbName}_${table}`,
-    text:    `Table: ${table}, Columns: ${columns.join(", ")}`,
-    table,
-    columns
-  }));
-
-  const textsToEmbed = tableTexts.map(t => t.text);
-  const model = 'multilingual-e5-large';
-
-  const embeddings = await pc.inference.embed(
-    model,
-    textsToEmbed,
-    { inputType: 'passage', truncate: 'END' }
-  );
-
-  console.log(embeddings[0]);
-  console.log(embeddings);
-
-  const indexName = process.env.INDEX_NAME;
-  const embeddedData = embeddings.data;
-
-  const vectors = embeddedData.map((item, i) => ({
-    id:      tableTexts[i].id,
-    values:  item.values,
-    metadata: {
-      text:     tableTexts[i].text,
-      table:    tableTexts[i].table,
-      database: dbName
+  const fetchWithRetry = async (url, options, retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const res = await fetch(url, options);
+        if (!res.ok && res.status >= 500) throw new Error(`Server Error: ${res.status}`);
+        return res;
+      } catch (err) {
+        console.warn(`Fetch attempt ${i + 1} failed: ${err.message}. Retrying in ${delay}ms...`);
+        if (i === retries - 1) throw err;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
-  }));
+  };
 
+  try {
+    const response = await fetchWithRetry('http://localhost:4000/schema', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...body,
+        dbConfig: session.dbConfig
+      })
+    });
 
-  const index = pc.index(indexName);
-  await index.namespace(dbName).upsert(vectors);
+    const data = await response.json();
+    return NextResponse.json(data);
 
-  return NextResponse.json({ status: '200' });
+  } catch (error) {
+    console.error("Engine Error:", error);
+    return NextResponse.json({ status: 500, error: "Engine connection failed" });
+  }
 }
