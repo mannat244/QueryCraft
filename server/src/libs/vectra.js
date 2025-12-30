@@ -1,6 +1,15 @@
 import { LocalIndex } from 'vectra';
-import { pipeline } from '@huggingface/transformers';
+import { pipeline, env } from '@huggingface/transformers';
 import path from 'path';
+import fs from 'fs';
+
+// Configure transformers to use a local cache directory
+// This avoids permission issues within node_modules on some systems
+const cacheDir = path.join(process.cwd(), '.cache');
+if (!fs.existsSync(cacheDir)) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+}
+env.cacheDir = cacheDir;
 
 // Fix: Use data directory strictly inside the server structure
 const index = new LocalIndex(path.join(process.cwd(), 'data', 'vectra_index'));
@@ -9,7 +18,12 @@ let extractor = null;
 
 async function getExtractor() {
     if (!extractor) {
-        extractor = await pipeline('feature-extraction', 'sentence-transformers/all-MiniLM-L6-v2');
+        try {
+            extractor = await pipeline('feature-extraction', 'sentence-transformers/all-MiniLM-L6-v2');
+        } catch (err) {
+            console.error("[Vectra] Failed to load embedding model:", err);
+            throw err;
+        }
     }
     return extractor;
 }

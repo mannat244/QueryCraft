@@ -51,7 +51,6 @@ server/src/localLLM/models/
 tmp/
 temp/
 *.tmp
-*.dll
 
 # Coverage
 coverage/
@@ -66,3 +65,7 @@ coverage/
 
 # Turbopack
 .turbo
+
+# Transformer cache
+.cache/
+**/.cache/

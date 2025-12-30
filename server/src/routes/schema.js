@@ -8,7 +8,7 @@ dotenv.config();
 
 const router = express.Router();
 
-// Create MySQL Connection Helper
+// Create MySQL Connection Helper (Read-Only focus)
 async function createDBConnection(dbConfig) {
     return await mysql.createConnection({
         host: dbConfig.host,
@@ -91,9 +91,12 @@ router.post('/', async (req, res) => {
         }
 
     } catch (err) {
-        console.error(err);
+        console.error("[SchemaRoute] Error:", err.message);
         if (connection) await connection.end();
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({
+            status: '500',
+            error: err.message || "Database synchronization failed"
+        });
     }
 });
 

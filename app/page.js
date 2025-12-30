@@ -14,6 +14,8 @@ export default function Home() {
   const usesql = () => { toast.success('Coming Soon! Connect to MySQL!', { theme: "dark", transition: Bounce }); }
   const connect = () => { toast.info('Understanding Schema...', { theme: "dark", transition: Bounce, autoClose: 3000 }); }
 
+  const [engineStatus, setEngineStatus] = useState("checking");
+
   useEffect(() => {
     async function checkSession() {
       const res = await fetch('/api/session');
@@ -21,15 +23,31 @@ export default function Home() {
       if (data.connected) {
         notify()
         window.location.href = "/chat";
+      } else if (data.defaults) {
+        setformData(prev => ({
+          ...prev,
+          ...data.defaults
+        }));
       }
     }
+
+    async function checkEngine() {
+      try {
+        const res = await fetch('http://localhost:4000/health');
+        if (res.ok) setEngineStatus("online");
+        else setEngineStatus("offline");
+      } catch (e) {
+        setEngineStatus("offline");
+      }
+    }
+
     checkSession();
+    checkEngine();
   }, []);
 
 
   const [conn_type, setconn_type] = useState("MySQL")
   const [url, seturl] = useState("")
-
   const [formData, setformData] = useState({
     "host": "localhost",
     "port": 3306,
@@ -39,28 +57,45 @@ export default function Home() {
     "ssl": false
   })
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    connect();
+    setIsLoading(true);
+    toast.info('Connecting to Database...', { theme: "dark", transition: Bounce, autoClose: 2000 });
+
     try {
-      const response = await fetch('/api/db', {
+      const dbResponse = await fetch('/api/db', {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
-        await handleSchema();
-        window.location.href = "/chat";
+      if (dbResponse.ok) {
+        toast.info('Syncing Schema & AI Models...', { theme: "dark", transition: Bounce, autoClose: 8000 });
+        const schemaSuccess = await handleSchema();
+
+        if (schemaSuccess) {
+          notify();
+          window.location.href = "/chat";
+        } else {
+          setIsLoading(false);
+          // Toast already shown in handleSchema
+        }
+      } else {
+        setIsLoading(false);
+        toast.error('Could not save session', { theme: "dark" });
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      setIsLoading(false);
       toast.error('Connection Failed', { theme: "dark" });
     }
   }
 
   const handleURLSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const response = await fetch('/api/db', {
         method: "POST",
@@ -74,6 +109,8 @@ export default function Home() {
     } catch (error) {
       console.log(error)
       toast.error('Connection Failed', { theme: "dark" });
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -82,13 +119,21 @@ export default function Home() {
       const response = await fetch('/api/schema', {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
-        body: "mysql",
+        body: JSON.stringify({ vectorStore: 'Local' }),
       });
-      if (response.ok) {
-        console.log("DB Schema Synced")
+
+      const data = await response.json();
+
+      if (response.ok && data.status === '200') {
+        console.log("DB Schema Synced locally")
+        return true;
+      } else {
+        toast.error(data.error || "Database connection error", { theme: "dark" });
+        return false;
       }
     } catch (error) {
-      console.log(error)
+      console.log("Schema sync failed:", error);
+      return false;
     }
   }
 
@@ -117,8 +162,8 @@ export default function Home() {
                   key={db}
                   onClick={() => setconn_type(db)}
                   className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${conn_type === db
-                      ? "bg-zinc-800 text-white shadow-sm"
-                      : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-zinc-800 text-white shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
                     }`}
                 >
                   {db}
@@ -132,23 +177,23 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2 col-span-2">
                   <Label htmlFor="host">Host</Label>
-                  <Input id="host" name="host" value={formData.host} onChange={handleChange} className="bg-zinc-950 border-zinc-800" />
+                  <Input id="host" name="host" value={formData.host} onChange={handleChange} className="bg-zinc-950 border-zinc-800" disabled={isLoading} />
                 </div>
                 <div className="space-y-2 col-span-1">
                   <Label htmlFor="port">Port</Label>
-                  <Input type="number" id="port" name="port" value={formData.port} onChange={handleChange} className="bg-zinc-950 border-zinc-800" />
+                  <Input type="number" id="port" name="port" value={formData.port} onChange={handleChange} className="bg-zinc-950 border-zinc-800" disabled={isLoading} />
                 </div>
                 <div className="space-y-2 col-span-1">
                   <Label htmlFor="database">Database</Label>
-                  <Input id="database" name="database" value={formData.database} onChange={handleChange} className="bg-zinc-950 border-zinc-800" />
+                  <Input id="database" name="database" value={formData.database} onChange={handleChange} className="bg-zinc-950 border-zinc-800" disabled={isLoading} />
                 </div>
                 <div className="space-y-2 col-span-1">
                   <Label htmlFor="user">User</Label>
-                  <Input id="user" name="user" value={formData.user} onChange={handleChange} className="bg-zinc-950 border-zinc-800" />
+                  <Input id="user" name="user" value={formData.user} onChange={handleChange} className="bg-zinc-950 border-zinc-800" disabled={isLoading} />
                 </div>
                 <div className="space-y-2 col-span-1">
                   <Label htmlFor="password">Password</Label>
-                  <Input type="password" id="password" name="password" value={formData.password} onChange={handleChange} className="bg-zinc-950 border-zinc-800" />
+                  <Input type="password" id="password" name="password" value={formData.password} onChange={handleChange} className="bg-zinc-950 border-zinc-800" disabled={isLoading} />
                 </div>
               </div>
 
@@ -160,11 +205,14 @@ export default function Home() {
                   checked={formData.ssl}
                   onChange={handleChange}
                   className="rounded border-zinc-700 bg-zinc-950 text-blue-600 focus:ring-blue-600/20"
+                  disabled={isLoading}
                 />
                 <Label htmlFor="ssl" className="font-normal cursor-pointer">Use SSL (requires env CA)</Label>
               </div>
 
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4">Connect MySQL</Button>
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4" disabled={isLoading}>
+                {isLoading ? "Connecting..." : "Connect MySQL"}
+              </Button>
             </form>
           )}
 
@@ -185,8 +233,14 @@ export default function Home() {
           )}
 
         </CardContent>
-        <CardFooter className="justify-center text-xs text-zinc-500">
-          Secure • Local • Fast
+        <CardFooter className="flex flex-col items-center gap-2 text-xs text-zinc-500">
+          <div className="flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${engineStatus === 'online' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : engineStatus === 'checking' ? 'bg-yellow-500' : 'bg-red-500 animate-pulse'}`}></span>
+            <span>QueryCraft Engine: {engineStatus === 'online' ? 'Online' : engineStatus === 'checking' ? 'Checking...' : 'Offline (Start Engine First)'}</span>
+          </div>
+          <div className="text-[10px] opacity-70">
+            Secure • Local • Fast
+          </div>
         </CardFooter>
       </Card>
 

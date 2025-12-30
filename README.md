@@ -26,37 +26,30 @@ Transform natural language into SQL queries with AI. QueryCraft supports multipl
 git clone https://github.com/yourusername/QueryCraft.git
 cd QueryCraft
 
-# Run the setup script
-npm run setup
+# Run the unified setup & start script
+QueryCraft.bat
 ```
 
-That's it! The setup script will:
-1. Install all dependencies (UI + server)
-2. Create environment file template
-3. Guide you through configuration
-4. Build the frontend
-5. Start the application
-
-## 📝 Manual Setup
+That's it! The script will interactively guide you through:
+1. Configuring your API keys (Azure, Gemini, Groq)
+2. Setting up local LLMs (Ollama, Llama.cpp)
+3. Installing all dependencies automatically
+4. Starting both backend and frontend servers
 
 If you prefer manual control:
 
 ```bash
 # 1. Install dependencies
 npm install
-cd server && npm install && cd ..
-cd UI && npm install && cd ..
+cd server && npm install
 
 # 2. Configure environment
 cp ENV_TEMPLATE.txt server/src/.env
 # Edit server/src/.env with your database credentials
 
-# 3. Build frontend
-cd UI && npm run build && cd ..
-
-# 4. Start application
-# Windows: Double-click START.bat
-# Linux/Mac: ./start.sh
+# 3. Start application
+# Windows: Double-click QueryCraft.bat
+# Linux: ./start.sh (if available)
 ```
 
 ## ⚙️ Configuration
@@ -96,10 +89,8 @@ AZURE_APIKEY=your_azure_key
 
 ```
 QueryCraft/
-├── UI/                    # Next.js frontend
-│   ├── app/              # Pages and API routes
-│   ├── components/       # React components
-│   └── package.json
+├── app/                  # Next.js pages and API routes
+├── components/           # React UI components
 ├── server/               # Express backend
 │   ├── src/
 │   │   ├── routes/      # API endpoints
@@ -107,9 +98,8 @@ QueryCraft/
 │   │   ├── libs/        # Utilities
 │   │   └── .env         # Configuration
 │   └── package.json
-├── START.bat            # Windows startup
-├── start.sh             # Linux/Mac startup
-└── ENV_TEMPLATE.txt     # Config template
+├── QueryCraft.bat       # Unified Setup & Start script
+└── ENV_TEMPLATE.txt     # Configuration template
 ```
 
 ## 🔧 Development
@@ -136,14 +126,21 @@ npm run dev
 - Check firewall settings
 
 **Port already in use?**
-- Run `STOP.bat` to kill existing processes
-- Or change `PORT` in `.env`
+- Close existing command windows
+- Or change `PORT` in `server/src/.env`
 
 ## 📚 Documentation
 
 - [Deployment Guide](deployment_guide.md) - Production deployment options
 - [Project Structure](PROJECT_STRUCTURE.md) - Detailed architecture
 - [Quick Start](QUICKSTART.md) - Step-by-step setup
+
+## 🛡️ Security & Safety
+
+- **Strictly Read-Only**: QueryCraft Engine uses `runSafeSQL` to ensure only `SELECT`, `SHOW`, and `DESCRIBE` queries are executed. 
+- **Destructive Block**: Keywords like `DELETE`, `DROP`, `UPDATE`, and `ALTER` are blocked at the code level.
+- **Auto-Protection**: The app will **never** attempt to create, edit, or delete your database or its contents.
+- **Privacy First**: All your database schema embeddings and results stay on your local machine. No database content is ever uploaded to the cloud.
 
 ## 🤝 Contributing
 

@@ -14,7 +14,7 @@ import { ChevronDown, Database, LogOut, SendHorizontal, BrainCircuit, Brain, Wan
 
 export default function ChatPage() {
 
-  const [selectedLLM, setSelectedLLM] = useState('gpt-oss-20b');
+  const [selectedLLM, setSelectedLLM] = useState('openai/gpt-oss-20b');
   const [groqModels, setGroqModels] = useState([]);
   const [selectedVectorStore, setSelectedVectorStore] = useState('Local');
   const [syncing, setSyncing] = useState(false);
@@ -70,17 +70,24 @@ export default function ChatPage() {
       .then(res => res.json())
       .then(data => {
         console.log('[Models API] Response:', data);
-        // Handle new response format with providers
         if (data.providers) {
           setAvailableProviders(data.providers);
+
+          // Auto-select the first available provider if Groq is not available
+          if (!data.providers.groq) {
+            if (data.providers.ollama) setSelectedLLM('Local (Ollama)');
+            else if (data.providers.llamacpp) setSelectedLLM('Local (Llama.cpp)');
+            else if (data.providers.gemini) setSelectedLLM('Gemini');
+          }
         }
         if (data.models && data.models.length > 0) {
-          // Store raw Groq IDs
           const modelIds = data.models.map(m => m.id);
-          console.log('[Models API] Setting groqModels:', modelIds);
           setGroqModels(modelIds);
-        } else {
-          console.warn('[Models API] No models found in response');
+          // If Groq is available, pick a high-quality default
+          if (data.providers?.groq) {
+            const bestDefault = modelIds.find(m => m.includes('llama-3.1-70b')) || modelIds[0];
+            setSelectedLLM(bestDefault);
+          }
         }
       })
       .catch(err => console.error("Failed to load models", err));
@@ -349,12 +356,21 @@ export default function ChatPage() {
               <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                 Cloud Providers
               </div>
-              <DropdownMenuItem onClick={() => handleModelSelect('Gemini')} className="hover:bg-zinc-900 focus:bg-zinc-900 focus:text-white cursor-pointer">
-                Google Gemini
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleModelSelect('Azure')} className="hover:bg-zinc-900 focus:bg-zinc-900 focus:text-white cursor-pointer">
-                Azure OpenAI
-              </DropdownMenuItem>
+              {availableProviders.gemini && (
+                <DropdownMenuItem onClick={() => handleModelSelect('Gemini')} className="hover:bg-zinc-900 focus:bg-zinc-900 focus:text-white cursor-pointer">
+                  Google Gemini
+                </DropdownMenuItem>
+              )}
+              {availableProviders.azure && (
+                <DropdownMenuItem onClick={() => handleModelSelect('Azure')} className="hover:bg-zinc-900 focus:bg-zinc-900 focus:text-white cursor-pointer">
+                  Azure OpenAI
+                </DropdownMenuItem>
+              )}
+              {!availableProviders.gemini && !availableProviders.azure && (
+                <div className="px-2 py-2 text-[10px] text-zinc-600 italic">
+                  No cloud keys configured
+                </div>
+              )}
 
               {groqModels.length > 0 && (
                 <>

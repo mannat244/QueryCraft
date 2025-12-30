@@ -16,17 +16,33 @@ export async function generateSQL(llmType, query, schema, promptStart, schemaPro
             return await LlamaCppProvider.generateSQL(prompt, history);
         }
         else if (llmType === "Gemini") {
-            return await GeminiProvider.generateSQL(query, schema, promptStart, schemaPrompt, schemaString, history);
+            try {
+                return await GeminiProvider.generateSQL(query, schema, promptStart, schemaPrompt, schemaString, history);
+            } catch (e) {
+                console.warn("[LLM] Gemini failed, falling back to Local (Ollama)...");
+                return await OllamaProvider.generateSQL(query, schema, promptStart, schemaPrompt, schemaString, history);
+            }
         }
         else if (llmType === "Azure") {
-            return await AzureProvider.generateSQL(query, schema, promptStart, schemaPrompt, schemaString, history);
+            try {
+                return await AzureProvider.generateSQL(query, schema, promptStart, schemaPrompt, schemaString, history);
+            } catch (e) {
+                console.warn("[LLM] Azure failed, falling back to Local (Ollama)...");
+                return await OllamaProvider.generateSQL(query, schema, promptStart, schemaPrompt, schemaString, history);
+            }
         }
         else {
-            // Assume everything else is handled by Groq (Qwen, DeepSeek, Mistral)
-            return await GroqProvider.generateSQL(llmType, query, schema, promptStart, schemaPrompt, schemaString, history);
+            // Assume everything else is handled by Groq
+            try {
+                return await GroqProvider.generateSQL(llmType, query, schema, promptStart, schemaPrompt, schemaString, history);
+            } catch (e) {
+                console.warn(`[LLM] Groq (${llmType}) failed, falling back to Local (Ollama)...`);
+                return await OllamaProvider.generateSQL(query, schema, promptStart, schemaPrompt, schemaString, history);
+            }
         }
     } catch (err) {
-        console.error("LLM Dispatch Error:", err);
+        console.error("LLM Dispatch Error Final Catch:", err);
+        // Last resort: If even fallback fails, we must throw
         throw err;
     }
 }

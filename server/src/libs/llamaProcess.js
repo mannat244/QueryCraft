@@ -76,7 +76,7 @@ export function startLlamaServer(config = {}) {
         // Optimized for RTX 3050 4GB: 33 layers fits in VRAM, rest on CPU
         // This prevents OOM and keeps inference fast
         const gpuLayers = useGpu ? '33' : '0';
-        const threads = config.threads || '10'; // i5-12450H has 10 cores
+        const threads = config.threads || process.env.THREADS || '8'; // i5-12450H has 10 cores
 
         console.log(`[LlamaManager] Config: GPU=${useGpu} (-ngl ${gpuLayers}), Threads=${threads}`);
         console.log(`[LlamaManager] Optimized for RTX 3050 4GB + i5-12450H`);
