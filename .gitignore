@@ -51,6 +51,7 @@ server/src/localLLM/models/
 tmp/
 temp/
 *.tmp
+*.dll
 
 # Coverage
 coverage/
