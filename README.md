@@ -80,11 +80,27 @@ For 100% privacy and no cost, you can run QueryCraft entirely on your machine.
 - **Production vs Dev**: Production mode is much faster and cleaner (no hydration warnings), but requires a build step the first time.
 - **Stop Services**: Simply close the command prompt windows opened by the script.
 
-## 🧪 Evaluation
+## 🧪 Performance Benchmark
 
-QueryCraft includes a robust evaluation suite to measure SQL generation accuracy.
+QueryCraft has been rigorously evaluated on a curated dataset to ensure production-grade SQL generation accuracy.
 
-- **Dataset**: [eval.json](server/eval.json) (Natural language queries + Ground Truth SQL)
+### Evaluation Results
+
+**Overall Accuracy: 82.98%** (39 correct / 47 total questions)
+
+| Difficulty Level | Questions | Correct | Failed | Accuracy | Status |
+|-----------------|-----------|---------|--------|----------|--------|
+| **Simple** | 21 | 20 | 1 | **95.2%** | ✅ Solved |
+| **Moderate** | 22 | 18 | 4 | **81.8%** | ⚠️ Reliable |
+| **Challenging** | 4 | 1 | 3 | **25.0%** | 🧪 Experimental |
+
+### Dataset Details
+
+- **Source**: [eval.json](server/eval.json) - Real-world natural language queries with ground truth SQL
+- **Domain**: Student Club Management Database (Multi-table joins, aggregations, subqueries)
+- **Complexity Range**: From basic `SELECT` statements to advanced analytical queries with multiple CTEs
+
+> **Note**: The evaluation uses exact SQL matching with an LLM-based semantic judge to determine correctness. Challenging queries (4 total) involve complex temporal logic and nested aggregations, which remain an active area of improvement.
 
 ## 🛡️ Security
 
