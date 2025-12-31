@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QueryCraft AI - Setup Guide</title>
+    <title>QueryCraft AI - Your Conversational Data Analyst</title>
     <style>
         * {
             margin: 0;
@@ -11,29 +12,43 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --background: 0 0% 3.9%;
+            --foreground: 0 0% 98%;
+            --card: 0 0% 7%;
+            --card-foreground: 0 0% 98%;
+            --primary: 0 0% 98%;
+            --primary-foreground: 0 0% 9%;
+            --secondary: 0 0% 14.9%;
+            --muted-foreground: 0 0% 63.9%;
+            --border: 0 0% 14.9%;
+            --ring: 0 0% 83.1%;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
             line-height: 1.6;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 24px;
         }
 
         /* Header */
         .header {
-            background: rgba(26, 26, 26, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px 0;
+            background: hsl(var(--background) / 0.8);
+            border-bottom: 1px solid hsl(var(--border));
+            padding: 16px 0;
             position: sticky;
             top: 0;
             z-index: 100;
+            backdrop-filter: blur(8px);
         }
 
         .nav {
@@ -43,412 +58,380 @@
         }
 
         .logo {
-            display: flex;
-            align-items: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #00d4ff;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.025em;
         }
 
         .logo::before {
             content: "⚡";
-            margin-right: 10px;
-            font-size: 28px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            margin-right: 8px;
         }
 
         .nav-links {
             display: flex;
-            gap: 30px;
+            gap: 24px;
         }
 
         .nav-link {
-            color: #ffffff;
+            color: hsl(var(--muted-foreground));
             text-decoration: none;
-            transition: color 0.3s ease;
+            transition: color 0.2s;
+            font-size: 14px;
             font-weight: 500;
         }
 
         .nav-link:hover {
-            color: #00d4ff;
+            color: hsl(var(--foreground));
         }
 
-        /* Hero Section */
+        /* Hero */
         .hero {
             text-align: center;
-            padding: 80px 0;
-            background: radial-gradient(circle at center, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
+            padding: 100px 0 60px;
         }
 
         .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #00d4ff 0%, #ffffff 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: fadeInUp 1s ease-out;
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
         }
 
         .hero p {
-            font-size: 1.3rem;
-            color: #b0b0b0;
-            margin-bottom: 40px;
-            animation: fadeInUp 1s ease-out 0.2s both;
+            font-size: 20px;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 32px;
         }
 
         .setup-time {
             display: inline-flex;
             align-items: center;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            padding: 15px 30px;
-            border-radius: 50px;
-            margin-bottom: 40px;
-            animation: fadeInUp 1s ease-out 0.4s both;
+            background: hsl(var(--secondary));
+            border: 1px solid hsl(var(--border));
+            padding: 8px 16px;
+            border-radius: 6px;
+            margin-bottom: 48px;
+            font-size: 14px;
+            color: hsl(var(--muted-foreground));
         }
 
         .setup-time::before {
             content: "⏱️";
-            margin-right: 10px;
-            font-size: 20px;
+            margin-right: 8px;
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Features */
+        .features {
+            padding: 80px 0;
+            background: hsl(var(--card));
+            border-top: 1px solid hsl(var(--border));
+            border-bottom: 1px solid hsl(var(--border));
         }
 
-        /* Steps Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 32px 24px;
+            background: hsl(var(--background));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: hsl(var(--ring));
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.025em;
+        }
+
+        .feature-card p {
+            color: hsl(var(--muted-foreground));
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Steps */
         .steps {
             padding: 80px 0;
         }
 
         .steps-header {
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 64px;
         }
 
         .steps-header h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            color: #ffffff;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.025em;
+        }
+
+        .steps-header p {
+            color: hsl(var(--muted-foreground));
+            font-size: 18px;
         }
 
         .steps-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 40px;
-            max-width: 800px;
+            gap: 24px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
-        @media (min-width: 1200px) {
-            .steps-grid {
-                max-width: 900px;
-            }
-        }
-
         .step-card {
-            background: rgba(45, 45, 45, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 40px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .step-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #00d4ff, #0099cc);
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 32px;
+            transition: border-color 0.2s;
         }
 
         .step-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
-            border-color: rgba(0, 212, 255, 0.3);
+            border-color: hsl(var(--ring));
         }
 
         .step-number {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
-            border-radius: 50%;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #ffffff;
+            width: 32px;
+            height: 32px;
+            background: hsl(var(--secondary));
+            border: 1px solid hsl(var(--border));
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
         }
 
         .step-title {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: #ffffff;
+            font-size: 20px;
+            margin-bottom: 8px;
             font-weight: 600;
+            letter-spacing: -0.025em;
         }
 
         .step-description {
-            color: #b0b0b0;
-            margin-bottom: 25px;
-            line-height: 1.7;
-        }
-
-        /* Code blocks */
-        .code-block {
-            background: #1a1a1a;
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-            font-family: 'Monaco', 'Menlo', monospace;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 20px;
             font-size: 14px;
-            position: relative;
-            overflow-x: auto;
         }
 
-        .code-block::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #00d4ff, #0099cc);
+        .code-block {
+            background: hsl(var(--background));
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            position: relative;
+        }
+
+        .code-block pre {
+            color: hsl(var(--muted-foreground));
         }
 
         .copy-btn {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(0, 212, 255, 0.2);
-            border: 1px solid rgba(0, 212, 255, 0.5);
-            color: #00d4ff;
-            padding: 8px 12px;
+            top: 12px;
+            right: 12px;
+            background: hsl(var(--secondary));
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--foreground));
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
-            transition: all 0.3s ease;
+            font-weight: 500;
+            transition: background 0.2s;
         }
 
         .copy-btn:hover {
-            background: rgba(0, 212, 255, 0.3);
+            background: hsl(var(--border));
         }
 
-        /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
-            color: #ffffff;
+            padding: 10px 20px;
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
             text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: opacity 0.2s;
             border: none;
             cursor: pointer;
-            font-size: 16px;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 212, 255, 0.3);
+            opacity: 0.9;
         }
 
         .btn-outline {
             background: transparent;
-            border: 2px solid #00d4ff;
-            color: #00d4ff;
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--foreground));
         }
 
         .btn-outline:hover {
-            background: #00d4ff;
-            color: #1a1a1a;
+            background: hsl(var(--secondary));
         }
 
         .btn::after {
             content: "→";
-            margin-left: 10px;
-            transition: transform 0.3s ease;
+            margin-left: 8px;
         }
 
-        .btn:hover::after {
-            transform: translateX(5px);
-        }
-
-        /* API Keys Section */
         .api-keys {
-            background: rgba(0, 212, 255, 0.05);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            border-radius: 20px;
-            padding: 40px;
-            margin: 40px 0;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
+            gap: 16px;
+            margin: 24px 0;
         }
 
         .api-key-item {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            align-items: center;
-            text-align: center;
-            padding: 30px 20px;
-            background: rgba(45, 45, 45, 0.5);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            min-height: 200px;
+            padding: 20px;
+            background: hsl(var(--background));
+            border-radius: 8px;
+            border: 1px solid hsl(var(--border));
+            transition: border-color 0.2s;
+            min-height: 160px;
         }
 
         .api-key-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 212, 255, 0.1);
-            border-color: rgba(0, 212, 255, 0.3);
-        }
-
-        .api-key-info {
-            margin-bottom: 20px;
+            border-color: hsl(var(--ring));
         }
 
         .api-key-info h4 {
-            color: #ffffff;
-            margin-bottom: 10px;
-            font-size: 1.2rem;
+            font-size: 16px;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
 
         .api-key-info p {
-            color: #b0b0b0;
-            font-size: 14px;
-            line-height: 1.5;
+            color: hsl(var(--muted-foreground));
+            font-size: 13px;
         }
 
-        /* Usage Examples */
         .demo-section {
             max-width: 800px;
-            margin: 40px auto 0;
+            margin: 48px auto 0;
+        }
+
+        .demo-section h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
             text-align: center;
+            letter-spacing: -0.025em;
         }
 
         .video-wrapper {
-            background: rgba(45, 45, 45, 0.8);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 20px;
-            padding: 20px;
-            margin: 20px 0;
-            transition: all 0.3s ease;
-        }
-
-        .video-wrapper:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
-            border-color: rgba(0, 212, 255, 0.5);
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 16px;
+            margin: 24px 0;
         }
 
         .video-wrapper iframe {
-            border-radius: 15px;
+            border-radius: 8px;
         }
 
         .usage-examples {
-            background: rgba(45, 45, 45, 0.5);
-            border-radius: 20px;
-            padding: 40px;
-            margin: 40px 0;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 48px;
+            margin: 64px 0;
+        }
+
+        .usage-examples h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+            letter-spacing: -0.025em;
+        }
+
+        .usage-examples>p {
+            text-align: center;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 32px;
         }
 
         .example-query {
-            background: rgba(0, 212, 255, 0.1);
-            border-left: 4px solid #00d4ff;
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 0 10px 10px 0;
-            font-style: italic;
+            background: hsl(var(--background));
+            border-left: 2px solid hsl(var(--ring));
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 6px;
+            font-size: 14px;
         }
 
-        /* Footer */
         .footer {
             text-align: center;
-            padding: 60px 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 48px 0;
+            border-top: 1px solid hsl(var(--border));
             margin-top: 80px;
         }
 
         .footer p {
-            color: #b0b0b0;
+            color: hsl(var(--muted-foreground));
+            font-size: 14px;
         }
 
-        /* Responsive */
+        .footer a {
+            color: hsl(var(--foreground));
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            opacity: 0.8;
+        }
+
         @media (max-width: 768px) {
             .hero h1 {
-                font-size: 2.5rem;
+                font-size: 40px;
             }
-            
-            .steps-grid {
-                max-width: none;
-            }
-            
+
             .nav-links {
                 display: none;
             }
-            
+
             .api-keys {
                 grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            
-            .api-key-item {
-                min-height: auto;
-                padding: 20px;
-            }
-        }
-
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 1s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .slide-up {
-            animation: slideUp 0.8s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
             }
         }
     </style>
 </head>
+
 <body>
     <header class="header">
         <div class="container">
@@ -465,20 +448,66 @@
 
     <section class="hero">
         <div class="container">
-            <h1>Get Started in Minutes</h1>
-            <p>Transform natural language into powerful SQL queries with AI</p>
-            <div class="setup-time">
-                <span>Setup Time: 5 minutes or less</span>
+            <h1>Your AI Data Analyst</h1>
+            <p>Ask questions in plain English, get insights instantly - no SQL knowledge required</p>
+            <div style="margin-bottom: 32px;">
+                <a href="#setup" class="btn" style="margin-right: 12px;">Get Started</a>
+                <a href="https://github.com/mannat244/QueryCraft" target="_blank" class="btn btn-outline">View on
+                    GitHub</a>
             </div>
-            
-            <!-- Product Demo Video -->
+            <div class="setup-time">
+                <span>Setup Time: 2 minutes with QueryCraft.bat</span>
+            </div>
+
             <div class="demo-section">
-                <h3 style="font-size: 1.5rem; margin-bottom: 20px; color: #ffffff;">See QueryCraft in Action</h3>
+                <h3>See QueryCraft in Action</h3>
                 <div class="video-wrapper">
                     <div style="padding:56.25% 0 0 0;position:relative;">
-                        <iframe src="https://player.vimeo.com/video/1088107419?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479&amp;dnt=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media" style="position:absolute;top:0;left:0;width:100%;height:100%;" title="QueryCraft AI – Generate SQL Instantly From Natural Language"></iframe>
+                        <iframe
+                            src="https://player.vimeo.com/video/1088107419?badge=0&autopause=0&player_id=0&app_id=58479&dnt=1"
+                            frameborder="0"
+                            allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                            style="position:absolute;top:0;left:0;width:100%;height:100%;"
+                            title="QueryCraft AI – Generate SQL Instantly From Natural Language"></iframe>
                     </div>
                     <script src="https://player.vimeo.com/api/player.js"></script>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Instant Insights</h3>
+                    <p>Get answers to your data questions in 1-2 seconds</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>Deep Analysis</h3>
+                    <p>Complex multi-step reasoning for comprehensive data insights</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Read-Only Safe</h3>
+                    <p>Blocks DELETE, DROP, UPDATE - your data is always protected</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>Multi-Provider</h3>
+                    <p>Works with Groq, Gemini, Azure, or local models</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Vectra Local Search</h3>
+                    <p>Privacy-first semantic search with local embeddings - no cloud uploads</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <h3>Smart Suggestions</h3>
+                    <p>AI-generated query suggestions based on your database schema</p>
                 </div>
             </div>
         </div>
@@ -488,83 +517,92 @@
         <div class="container">
             <div class="steps-header">
                 <h2>Simple 4-Step Setup</h2>
-                <p>Follow these steps to get QueryCraft running on your machine</p>
+                <p>Just run QueryCraft.bat and you're ready to go!</p>
             </div>
 
             <div class="steps-grid">
-                <div class="step-card slide-up">
+                <div class="step-card">
                     <div class="step-number">1</div>
-                    <h3 class="step-title">Clone & Install</h3>
-                    <p class="step-description">Get the QueryCraft repository and install all dependencies</p>
+                    <h3 class="step-title">Prerequisites</h3>
+                    <p class="step-description">Ensure you have the required software installed</p>
                     <div class="code-block">
                         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                        <pre>git clone https://github.com/mannat244/QueryCraft.git
-cd QueryCraft
-npm install</pre>
+                        <pre>✅ Node.js 18+ installed
+✅ MySQL Database accessible
+✅ Windows 10/11 (for batch script)</pre>
                     </div>
                 </div>
 
-                <div class="step-card slide-up">
+                <div class="step-card">
                     <div class="step-number">2</div>
-                    <h3 class="step-title">Get API Keys</h3>
-                    <p class="step-description">Obtain your free API keys from Google Gemini and Pinecone</p>
+                    <h3 class="step-title">Get API Keys (Optional)</h3>
+                    <p class="step-description">Choose your preferred LLM provider - or use local models for 100%
+                        privacy</p>
                     <div class="api-keys">
                         <div class="api-key-item">
                             <div class="api-key-info">
-                                <h4>Google Gemini API</h4>
-                                <p>Free AI model for natural language processing</p>
+                                <h4>🚀 Groq (Recommended)</h4>
+                                <p>Free & fastest response times (1-2s)</p>
+                            </div>
+                            <a href="https://console.groq.com/keys" target="_blank" class="btn">Get API Key</a>
+                        </div>
+                        <div class="api-key-item">
+                            <div class="api-key-info">
+                                <h4>🤖 Google Gemini</h4>
+                                <p>Excellent reasoning with large free tier</p>
                             </div>
                             <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn">Get API Key</a>
                         </div>
                         <div class="api-key-item">
                             <div class="api-key-info">
-                                <h4>Pinecone Vector DB</h4>
-                                <p>Vector database for schema storage and retrieval</p>
+                                <h4>☁️ Azure OpenAI</h4>
+                                <p>Enterprise-grade AI capabilities</p>
                             </div>
-                            <a href="https://docs.pinecone.io/guides/projects/manage-api-keys#create-an-api-key" target="_blank" class="btn">Get API Key</a>
+                            <a href="https://portal.azure.com" target="_blank" class="btn">Get API Key</a>
+                        </div>
+                        <div class="api-key-item">
+                            <div class="api-key-info">
+                                <h4>🏠 Local Models (CPU)</h4>
+                                <p>100% privacy - just download a GGUF file, no Ollama needed!</p>
+                            </div>
+                            <a href="https://huggingface.co/models?search=gguf" target="_blank" class="btn">Download
+                                GGUF</a>
                         </div>
                     </div>
                 </div>
 
-                <div class="step-card slide-up">
+                <div class="step-card">
                     <div class="step-number">3</div>
-                    <h3 class="step-title">Configure Environment</h3>
-                    <p class="step-description">Create your environment file with the API keys</p>
-                    <div class="code-block">
-                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                        <pre># .env.local
-SESSION_PASSWORD=your-secure-password-here
-GEMINI_API_KEY=your-gemini-api-key-here
-PINECONE_APIKEY=your-pinecone-api-key-here
-INDEX_NAME=schemaindex
-
-# Optional: Database SSL Certificate
-DB_SSL_CA="-----BEGIN CERTIFICATE-----
-your-ssl-certificate-content-here
------END CERTIFICATE-----"</pre>
+                    <h3 class="step-title">Run QueryCraft.bat</h3>
+                    <p class="step-description">Double-click the unified setup script - it handles everything!</p>
+                    <div
+                        style="background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 20px; margin: 20px 0;">
+                        <p style="font-weight: 600; margin-bottom: 15px;">✨ The script will automatically:</p>
+                        <ul
+                            style="color: hsl(var(--muted-foreground)); list-style: none; padding-left: 0; font-size: 14px;">
+                            <li style="margin: 10px 0;">✅ Check for port availability (3000 & 4000)</li>
+                            <li style="margin: 10px 0;">✅ Configure your .env file interactively</li>
+                            <li style="margin: 10px 0;">✅ Install all dependencies (npm install)</li>
+                            <li style="margin: 10px 0;">✅ Build the production frontend</li>
+                            <li style="margin: 10px 0;">✅ Launch backend and frontend servers</li>
+                            <li style="margin: 10px 0;">✅ Open your browser automatically</li>
+                        </ul>
                     </div>
-                    <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 10px; padding: 15px; margin-top: 15px;">
-                        <p style="color: #ffc107; font-weight: 600; margin-bottom: 10px;">⚡ Generate Session Password</p>
-                        <p style="color: #b0b0b0; font-size: 14px; margin-bottom: 15px;">Click below to generate a secure 32-character random password:</p>
-                        <button onclick="generateSessionPassword()" class="btn" style="font-size: 14px; padding: 10px 20px;">Generate Password</button>
-                        <div id="generatedPassword" style="display: none; margin-top: 15px;">
-                            <div class="code-block" style="margin: 0; position: relative;">
-                                <button class="copy-btn" onclick="copyGeneratedPassword()" style="top: 10px; right: 10px;">Copy</button>
-                                <pre id="passwordOutput" style="font-size: 12px; word-break: break-all;"></pre>
-                            </div>
-                        </div>
-                    </div>
+                    <p style="margin-top: 20px; font-weight: 600;">⏱️ Total Setup Time: ~2 minutes</p>
                 </div>
 
-                <div class="step-card slide-up">
+                <div class="step-card">
                     <div class="step-number">4</div>
-                    <h3 class="step-title">Launch QueryCraft</h3>
-                    <p class="step-description">Start the development server and begin querying!</p>
+                    <h3 class="step-title">Start Querying!</h3>
+                    <p class="step-description">Connect your database and ask questions in natural language</p>
                     <div class="code-block">
                         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                        <pre>npm run dev</pre>
+                        <pre># Example queries:
+"Show me all employees in Sales department"
+"What's the average salary by department?"
+"Find customers who haven't ordered in 6 months"</pre>
                     </div>
-                    <p style="margin-top: 20px; color: #00d4ff;">🚀 App will be available at: <strong>http://localhost:3000</strong></p>
+                    <p style="margin-top: 20px;">🚀 App will be available at: <strong>http://localhost:3000</strong></p>
                 </div>
             </div>
         </div>
@@ -572,10 +610,8 @@ your-ssl-certificate-content-here
 
     <section class="usage-examples" id="examples">
         <div class="container">
-            <h2 style="text-align: center; margin-bottom: 40px; color: #ffffff;">Ready to Query?</h2>
-            <p style="text-align: center; margin-bottom: 40px; color: #b0b0b0;">
-                Once setup is complete, connect your database and start asking questions in plain English
-            </p>
+            <h2>Ask Anything About Your Data</h2>
+            <p>Simply ask questions in plain English - QueryCraft analyzes your database and provides insights</p>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                 <div class="example-query">
@@ -602,7 +638,7 @@ your-ssl-certificate-content-here
         <div class="container">
             <p>&copy; 2025 QueryCraft AI. Built with ❤️ by Mannat Trivedi.</p>
             <p style="margin-top: 10px;">
-                <a href="https://github.com/mannat244/QueryCraft" target="_blank" style="color: #00d4ff;">⭐ Star us on GitHub</a>
+                <a href="https://github.com/mannat244/QueryCraft" target="_blank">⭐ Star us on GitHub</a>
             </p>
         </div>
     </footer>
@@ -611,133 +647,30 @@ your-ssl-certificate-content-here
         function copyCode(button) {
             const codeBlock = button.nextElementSibling;
             const text = codeBlock.textContent;
-            
+
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = button.textContent;
                 button.textContent = 'Copied!';
-                button.style.background = 'rgba(34, 197, 94, 0.3)';
-                button.style.borderColor = 'rgba(34, 197, 94, 0.5)';
-                button.style.color = '#22c55e';
-                
+                button.style.background = 'hsl(var(--secondary))';
+
                 setTimeout(() => {
                     button.textContent = originalText;
-                    button.style.background = 'rgba(0, 212, 255, 0.2)';
-                    button.style.borderColor = 'rgba(0, 212, 255, 0.5)';
-                    button.style.color = '#00d4ff';
+                    button.style.background = '';
                 }, 2000);
             });
         }
 
-        function generateSessionPassword() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-            let password = '';
-            
-            for (let i = 0; i < 32; i++) {
-                password += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            
-            document.getElementById('passwordOutput').textContent = `SESSION_PASSWORD=${password}`;
-            document.getElementById('generatedPassword').style.display = 'block';
-            
-            // Scroll to show the generated password
-            document.getElementById('generatedPassword').scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest'
-            });
-        }
-
-        function copyGeneratedPassword() {
-            const passwordText = document.getElementById('passwordOutput').textContent;
-            
-            navigator.clipboard.writeText(passwordText).then(() => {
-                const button = event.target;
-                const originalText = button.textContent;
-                button.textContent = 'Copied!';
-                button.style.background = 'rgba(34, 197, 94, 0.3)';
-                button.style.borderColor = 'rgba(34, 197, 94, 0.5)';
-                button.style.color = '#22c55e';
-                
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.style.background = 'rgba(0, 212, 255, 0.2)';
-                    button.style.borderColor = 'rgba(0, 212, 255, 0.5)';
-                    button.style.color = '#00d4ff';
-                }, 2000);
-            });
-        }
-
-        // Smooth scrolling for navigation links
+        // Smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
         });
-
-        // Add scroll animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-
-        // Observe all step cards
-        document.querySelectorAll('.step-card').forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(50px)';
-            card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
-            observer.observe(card);
-        });
-
-        // Add floating particles effect
-        function createParticle() {
-            const particle = document.createElement('div');
-            particle.style.position = 'fixed';
-            particle.style.width = '4px';
-            particle.style.height = '4px';
-            particle.style.background = 'rgba(0, 212, 255, 0.6)';
-            particle.style.borderRadius = '50%';
-            particle.style.pointerEvents = 'none';
-            particle.style.zIndex = '1';
-            
-            const startX = Math.random() * window.innerWidth;
-            const startY = window.innerHeight + 10;
-            const endY = -10;
-            const duration = 3000 + Math.random() * 2000;
-            
-            particle.style.left = startX + 'px';
-            particle.style.top = startY + 'px';
-            
-            document.body.appendChild(particle);
-            
-            particle.animate([
-                { transform: 'translateY(0px)', opacity: 0 },
-                { transform: 'translateY(-20px)', opacity: 1 },
-                { transform: `translateY(${endY - startY}px)`, opacity: 0 }
-            ], {
-                duration: duration,
-                easing: 'linear'
-            }).onfinish = () => {
-                particle.remove();
-            };
-        }
-
-        // Create particles periodically
-        setInterval(createParticle, 500);
     </script>
 </body>
+
 </html>

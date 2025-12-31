@@ -2,6 +2,7 @@ import { LocalIndex } from 'vectra';
 import { pipeline, env } from '@huggingface/transformers';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 // Configure transformers to use a local cache directory
 // This avoids permission issues within node_modules on some systems
@@ -11,8 +12,19 @@ if (!fs.existsSync(cacheDir)) {
 }
 env.cacheDir = cacheDir;
 
-// Fix: Use data directory strictly inside the server structure
-const index = new LocalIndex(path.join(process.cwd(), 'data', 'vectra_index'));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Fix: Resolve 'data' directory relative to THIS file (server/src/libs/vectra.js)
+// Go up 2 levels: libs -> src -> server, then into 'data'
+const dataPath = path.resolve(__dirname, '..', '..', 'data', 'vectra_index');
+
+// Ensure parent data dir exists
+if (!fs.existsSync(path.dirname(dataPath))) {
+    fs.mkdirSync(path.dirname(dataPath), { recursive: true });
+}
+
+const index = new LocalIndex(dataPath);
 
 let extractor = null;
 
@@ -38,8 +50,16 @@ export async function getRelevantTablesLocal(query, database) {
     const output = await pipe(query, { pooling: 'mean', normalize: true });
     const vector = Array.from(output.data);
 
-    // Filter by database
-    const results = await index.queryItems(vector, 10, { "database": { "$eq": database } });
+    // Relaxed Query: Fetch more candidates, filter manually for robustness
+    console.log(`[Vectra] Querying for '${database}' (Manual Filter Loop)`);
+
+    // Fetch top 50 to ensure we find our relevant items even if there's noise
+    const rawResults = await index.queryItems(vector, 50);
+
+    // Manual Filter
+    const results = rawResults.filter(r => {
+        return r.item.metadata && r.item.metadata.database === database;
+    }).slice(0, 10); // Take top 10 after filtering
 
     if (results.length > 0) {
         const usedTables = new Set();
@@ -71,4 +91,20 @@ export async function upsertItemLocal(text, metadata, database) {
         vector,
         metadata: { ...metadata, text, database }
     });
+}
+
+export async function resetIndex() {
+    const indexPath = dataPath;
+    try {
+        if (fs.existsSync(indexPath)) {
+            fs.rmSync(indexPath, { recursive: true, force: true });
+        }
+    } catch (e) {
+        console.error("[Vectra] Failed to delete old index (locked?):", e.message);
+    }
+
+    // Always ensure index exists
+    if (!(await index.isIndexCreated())) {
+        await index.createIndex();
+    }
 }

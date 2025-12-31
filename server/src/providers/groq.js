@@ -47,6 +47,9 @@ export async function generateSQL(llmType, query, schema, promptStart, schemaPro
         // Add current user query
         messages.push({ "role": "user", "content": `${query} , you have to strictly follow the schema: ${schema} complete ${schemaString}` });
 
+        // DEBUG: Log the full prompt
+        // console.log(`[Groq Provider] Sending Prompt:`, JSON.stringify(messages, null, 2));
+
         const chatCompletion = await client.chat.completions.create({
             "messages": messages,
             "model": model,
@@ -110,5 +113,48 @@ export async function generateThinkResponse(llmType, query, results, prompt, sch
     } catch (error) {
         console.error("[Groq Provider] Think Error:", error);
         return { text: "Failed to generate insights due to an error." };
+    }
+}
+
+export async function verifySQL(llmType, messages) {
+    try {
+        const client = getClient();
+        // Use provided model or default to 70b
+        let model = llmType || "llama3-70b-8192";
+
+        // Handle Friendly Names -> IDs mapping
+        if (model === "Llama 3.1 8B") model = "llama-3.1-8b-instant";
+        if (model === "Llama 3 70B") model = "llama3-70b-8192";
+        if (model === "Gemma 2 9B") model = "gemma2-9b-it";
+        if (model === "Groq") model = "llama3-70b-8192";
+
+        const chatCompletion = await client.chat.completions.create({
+            "messages": messages,
+            "model": model,
+            "temperature": 0.1, // Strict checking
+            "max_completion_tokens": 4096,
+            "top_p": 1,
+            "stream": false,
+            "response_format": { "type": "json_object" }, // Enforce JSON
+            "stop": null
+        });
+
+        const content = chatCompletion.choices[0].message.content;
+        console.log("[Groq Provider] Critic Response:", content);
+
+        try {
+            return JSON.parse(content);
+        } catch {
+            // Fallback for non-JSON response
+            if (chatCompletion.error) {
+                return JSON.parse(chatCompletion.error.failed_generation);
+            }
+            console.warn("Critic returned non-JSON:", content);
+            return { status: "PASS", reason: "Critic output parse error" };
+        }
+
+    } catch (error) {
+        console.error("[Groq Provider] Critic Error:", error);
+        return { status: "PASS", reason: "Critic unavailable" };
     }
 }

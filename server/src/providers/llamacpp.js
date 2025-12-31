@@ -2,7 +2,7 @@ import { PROMPT_START, THINK_PROMPT, injectTemporalContext } from '../libs/promp
 
 // Configuration
 const BASE_URL = "http://127.0.0.1:8080/v1/chat/completions";
-const MODEL_NAME = "gemma-3-4b-it"; // Hardcoded matching the file found
+const MODEL_NAME = process.env.LLAMA_CPP_MODEL || "gemma-3-4b-it"; // Configurable via .env
 
 async function callLlamaCpp(messages, max_tokens = 1000, timeoutMs = 120000) {
     try {

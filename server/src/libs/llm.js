@@ -74,3 +74,41 @@ export async function generateThinkResponse(llmType, query, results, prompt, sch
         return await GroqProvider.generateThinkResponse(llmType, query, results, prompt, schema);
     }
 }
+
+import { CRITIC_PROMPT } from './prompts.js';
+
+export async function verifySQL(llmType, userQuery, generatedSql, schemaContext) {
+    const filledPrompt = CRITIC_PROMPT
+        .replace("{{USER_QUERY}}", userQuery)
+        .replace("{{GENERATED_SQL}}", generatedSql);
+
+    const messages = [
+        { role: "system", content: "You are a strict SQL Critic. Respond in JSON." },
+        { role: "user", content: filledPrompt + "\n\n" + schemaContext }
+    ];
+
+    try {
+        // Logic to choose provider similar to generateSQL
+        // For now, reuse Groq or Ollama based on llmType string
+        if (llmType === "Local (Ollama)" || llmType === "Local") {
+            return await OllamaProvider.verifySQL(messages);
+        }
+        else if (llmType === "Local (Llama.cpp)") {
+            // Llama.cpp might not support generic chat messages format directly in our provider yet
+            // Simplify for Llama.cpp if needed, or fallback to generic prompt
+            return await LlamaCppProvider.verifySQL(filledPrompt + "\n\n" + schemaContext);
+        }
+        else if (llmType === "Gemini") {
+            return await GeminiProvider.verifySQL(messages);
+        }
+        else {
+            // Groq Default
+            return await GroqProvider.verifySQL(llmType, messages);
+        }
+
+    } catch (e) {
+        console.warn("[VerifySQL] Verification failed:", e.message);
+        // Fail open: If critic dies, assume code is fine to avoid blocking execution
+        return { status: "PASS" };
+    }
+}

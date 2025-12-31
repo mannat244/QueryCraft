@@ -52,7 +52,20 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🚀 QueryCraft Engine started on port ${PORT}`);
-    console.log(`🔗 Health Check: http://localhost:${PORT}/health`);
-    console.log(`📂 Working Dir: ${process.cwd()}\n`);
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`🚀 QueryCraft AI Engine - Ready!`);
+    console.log(`${'='.repeat(60)}`);
+    console.log(`\n📡 Server Status:`);
+    console.log(`   ├─ Port: ${PORT}`);
+    console.log(`   ├─ Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`   └─ Health: http://localhost:${PORT}/health`);
+    console.log(`\n⚡ Features:`);
+    console.log(`   ├─ Fast Mode: 1-2s response time`);
+    console.log(`   ├─ Think Mode: 10-15s deep analysis`);
+    console.log(`   ├─ Multi-Provider: Groq, Gemini, Azure, Local`);
+    console.log(`   └─ Safe SQL: Read-only execution`);
+    console.log(`\n🔧 Configuration:`);
+    console.log(`   ├─ Working Dir: ${process.cwd()}`);
+    console.log(`   └─ Threads: ${process.env.THREADS || '8'}`);
+    console.log(`\n${'='.repeat(60)}\n`);
 });

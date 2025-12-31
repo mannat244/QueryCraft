@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import JsonToTable from '../components/JsonToTable'
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 import CodeBlock from '../components/CodeBlock'
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
-import { ChevronDown, Database, LogOut, SendHorizontal, BrainCircuit, Brain, Wand2, RefreshCw, Settings } from "lucide-react"
+import { ChevronDown, Database, LogOut, SendHorizontal, BrainCircuit, Brain, Wand2, RefreshCw, Settings, Eraser, Loader2 } from "lucide-react"
 
 export default function ChatPage() {
 
@@ -138,11 +140,31 @@ export default function ChatPage() {
   const [think, setthink] = useState(false)
   const [thoughts, setThoughts] = useState([])
 
+  const handleClearContext = () => {
+    setMessages([]);
+    setoutput(undefined);
+    settext("");
+    setsql(undefined);
+    settable(false);
+    toast.info("Context Cleared!", { theme: "dark", transition: Bounce, autoClose: 2000 });
+  };
+
   const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '48px'; // Reset to single line
+      const scrollHeight = textareaRef.current.scrollHeight;
+      // Grow smoothly from 1 line (48px) to max 2 lines (~72px)
+      textareaRef.current.style.height = Math.min(scrollHeight, 72) + 'px';
+    }
+  }, [input]);
 
   useEffect(() => {
     scrollToBottom()
@@ -402,6 +424,17 @@ export default function ChatPage() {
             </Button>
           )}
 
+          {/* Clear Context Moved Here */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClearContext}
+            className="text-zinc-400 hover:text-white hover:bg-zinc-800 hidden md:flex"
+            title="Clear Chat History"
+          >
+            <Eraser className="h-5 w-5" />
+          </Button>
+
           {/* Settings Toggle Trigger */}
           <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)} className={`text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 ${showSettings ? 'text-white bg-zinc-800' : ''}`}>
             <span className="sr-only">Settings</span>
@@ -412,8 +445,6 @@ export default function ChatPage() {
           {showSettings && (
             <div className="absolute top-16 right-20 bg-zinc-950 border border-zinc-800 p-4 rounded-xl w-64 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200">
               <h3 className="text-sm font-semibold text-zinc-300 mb-3">Server Management</h3>
-
-
 
               {selectedLLM === 'Local (Llama.cpp)' && llamaServerRunning && (
                 <>
@@ -564,8 +595,8 @@ export default function ChatPage() {
                         </div>
                       )}
                       {msg.content && (
-                        <div className="text-zinc-300 text-sm leading-relaxed">
-                          {msg.content}
+                        <div className="prose prose-invert max-w-none text-zinc-300 text-sm leading-relaxed break-words">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                         </div>
                       )}
                     </div>
@@ -637,7 +668,7 @@ export default function ChatPage() {
                 <div className="flex-1 space-y-4 overflow-hidden min-w-0">
                   {!think && text && (
                     <div className="prose prose-invert max-w-none text-zinc-300 text-sm md:text-base leading-relaxed break-words">
-                      <p>{text}</p>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
                     </div>
                   )}
 
@@ -658,7 +689,9 @@ export default function ChatPage() {
                       <div className="flex items-center gap-2 mb-2 text-zinc-400 text-sm font-medium">
                         <BrainCircuit className="h-4 w-4" /> Analysis
                       </div>
-                      <p className="text-zinc-300 leading-relaxed text-sm md:text-base">{text}</p>
+                      <div className="text-zinc-300 leading-relaxed text-sm md:text-base prose prose-invert max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -672,32 +705,46 @@ export default function ChatPage() {
         {/* Input Area - Static at bottom */}
         <div className="w-full bg-black p-4 pb-8 md:pb-6 border-t border-zinc-900 relative shrink-0 z-20">
           <div className="max-w-4xl mx-auto relative bg-zinc-950/80 rounded-xl border border-zinc-800 shadow-2xl focus-within:ring-1 focus-within:ring-zinc-700 transition-all">
-            <Input
-              autoFocus
-              value={input}
-              onChange={(e) => setinput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleInput()}
-              placeholder="Ask a question..."
-              className="bg-transparent border-none text-base h-12 md:h-14 pl-4 pr-12 md:pr-32 focus-visible:ring-0 placeholder:text-zinc-600"
-            />
+            <div className="flex items-center gap-2 pr-2">
+              <textarea
+                ref={textareaRef}
+                autoFocus
+                value={input}
+                onChange={(e) => setinput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleInput();
+                  }
+                }}
+                placeholder="Ask a question..."
+                className="flex-1 bg-transparent border-none text-base pl-4 pr-2 py-3 focus:outline-none placeholder:text-zinc-600 resize-none overflow-y-auto text-zinc-100 transition-all duration-200 ease-in-out"
+                style={{ height: '48px', minHeight: '48px' }}
+              />
 
-            <div className="absolute right-2 top-2 bottom-2 md:top-3 md:bottom-3 flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setthink(!think)}
-                className={`hidden md:flex h-9 px-3 text-xs font-medium transition-colors border border-transparent ${think ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-              >
-                {think ? "Think Mode On" : "Think Mode"}
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setthink(!think)}
+                  className={`hidden md:flex h-9 px-3 text-xs font-medium transition-colors border border-transparent ${think ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+                >
+                  {think ? "Think Mode On" : "Think Mode"}
+                </Button>
 
-              <Button
-                size="icon"
-                onClick={handleInput}
-                className="h-8 w-8 md:h-10 md:w-10 bg-white text-black hover:bg-zinc-200 rounded-lg transition-colors"
-              >
-                <SendHorizontal className="h-4 w-4 md:h-5 md:w-5" />
-              </Button>
+                <Button
+                  size="icon"
+                  onClick={handleInput}
+                  disabled={loading}
+                  className="h-9 w-9 bg-white text-black hover:bg-zinc-200 rounded-lg transition-colors flex items-center justify-center disabled:opacity-70"
+                >
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <SendHorizontal className="h-5 w-5" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

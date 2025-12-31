@@ -1,91 +1,36 @@
 # 🚀 QueryCraft - Quick Start Guide
 
-## One-Click Startup (Windows)
+## One-Click Startup (Recommended)
 
-### First Time Setup
+1. **Extract the ZIP** file.
+2. **Double-click `QueryCraft.bat`**.
 
-1. **Install dependencies** (only once):
-```bash
-npm install
-cd server && npm install && cd ..
-```
-
-2. **Configure database**:
-   - Copy `ENV_TEMPLATE.txt` to `server\src\.env`
-   - Edit `server\src\.env` with your database credentials
-
-3. **Build the app** (only once):
-```bash
-npm run build
-```
-
-### Running QueryCraft
-
-**Double-click `START.bat`** - That's it! 🎉
-
-Two windows will open:
-- **Backend Server** (port 4000)
-- **Frontend Server** (port 3000)
-
-Open your browser: **http://localhost:3000**
-
-### Stopping QueryCraft
-
-**Double-click `STOP.bat`** - Stops all servers
+That's it! The script will guide you through:
+- Installing Node.js dependencies automatically.
+- Configuring your LLM (Groq, Gemini, Azure, or Local).
+- Starting the servers and opening your browser.
 
 ---
 
-## Manual Start (Alternative)
+## Technical Details
 
-If you prefer manual control:
+If you prefer to run things manually:
 
-```bash
-# Terminal 1: Backend
-cd server\src
-node index.js
-
-# Terminal 2: Frontend
-npm start
-```
+1. **Root Folder**: `npm install`
+2. **Server Folder**: `cd server && npm install`
+3. **Build Frontend**: `npm run build`
+4. **Start Backend**: `cd server/src && node index.js`
+5. **Start Frontend**: `npm start`
 
 ---
 
-## Troubleshooting
+## Stopping QueryCraft
 
-**Problem**: "Port already in use"
-- **Fix**: Run `STOP.bat` first, then `START.bat`
-
-**Problem**: "Cannot connect to database"
-- **Fix**: Check `server\src\.env` database credentials
-
-**Problem**: "Models not loading"
-- **Fix**: Add `GROQ_API_KEY` to `server\src\.env`
+Simply close the two command prompt windows that are running the Backend and Frontend services.
 
 ---
 
-## What's Included
-
-✅ **START.bat** - One-click startup
-✅ **STOP.bat** - One-click shutdown
-✅ **ENV_TEMPLATE.txt** - Configuration template
-✅ Production-ready build
-
----
-
-## For Users
-
-**Minimum Requirements**:
-- Windows 10/11
-- Node.js 18+
-- MySQL database
-
-**Installation**:
-1. Extract ZIP
-2. Run `npm install` in root folder
-3. Run `npm install` in server folder
-4. Copy `ENV_TEMPLATE.txt` to `server\src\.env`
-5. Edit `.env` with your database info
-6. Run `npm run build`
-7. Double-click `START.bat`
-
-**That's it!** 🚀
+## Minimum Requirements
+- **OS**: Windows 10/11
+- **Node**: Node.js 18+
+- **Database**: MySQL 5.7+ or MariaDB

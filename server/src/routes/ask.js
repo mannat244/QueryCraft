@@ -6,7 +6,7 @@ import { getRelevantTables } from '../libs/pinecone.js';
 import { getRelevantTablesLocal } from '../libs/vectra.js';
 import { fetchSchemaQuoted } from '../libs/schema.js';
 import { PROMPT_START, PROMPT_SCHEMA_AWARENESS, THINK_PROMPT, INVESTIGATE_PROMPT, FINAL_PROMPT } from '../libs/prompts.js';
-import { generateSQL, generateThinkResponse } from '../libs/llm.js';
+import { generateSQL, generateThinkResponse, verifySQL } from '../libs/llm.js';
 import { runSafeSQL } from '../libs/sqlRunner.js';
 
 dotenv.config();
@@ -63,21 +63,28 @@ router.post('/', async (req, res) => {
         const rows = await runSafeSQL(connection, 'SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = "' + dbConfig.database + '"');
         const tableCount = rows[0].count;
 
-        let schemaBlock = "";
+        // STRATEGY: Hybrid Context
+        // 1. ALWAYS run Vector Search to get semantic insights (descriptions, matching "Fundraising" -> "Income")
+        // 2. IF tableCount < 50: Provide FULL Schema DDL (for completeness) + Vector Context
+        // 3. IF tableCount >= 50: Provide FILTERED Schema DDL (to save tokens) + Vector Context
+
+        sendLog("Analyzing query semantics (Vector Search)...");
+        let retrievedBlock;
+        if (vectorStore === 'Pinecone') {
+            retrievedBlock = await getRelevantTables(query, dbConfig.database);
+        } else {
+            retrievedBlock = await getRelevantTablesLocal(query, dbConfig.database);
+        }
+
+        const schemaBlock = retrievedBlock.text; // "Relevant Tables: ... Description: ..."
         let filterTables = null;
 
         if (tableCount < 50) {
-            sendLog("Fetching full schema...");
+            sendLog("Small DB detected. Including full schema DDL for context completeness.");
+            filterTables = null; // No filter, get everything
         } else {
-            sendLog("Large DB detected. Using vector search for relevant tables...");
-            let retrievedBlock;
-            if (vectorStore === 'Pinecone') {
-                retrievedBlock = await getRelevantTables(query, dbConfig.database);
-            } else {
-                retrievedBlock = await getRelevantTablesLocal(query, dbConfig.database);
-            }
-            schemaBlock = retrievedBlock.text;
-            filterTables = retrievedBlock.tables;
+            sendLog("Large DB detected. Filtering schema DDL to relevant tables...");
+            filterTables = retrievedBlock.tables; // Only get DDL for vector-matched tables
         }
 
         const { schemaString } = await fetchSchemaQuoted(connection, dbConfig.database, 20000, filterTables);
@@ -111,6 +118,30 @@ router.post('/', async (req, res) => {
                     const finalResponse = await generateSQL(llm, query + investigationContext, schemaBlock, FINAL_PROMPT, PROMPT_SCHEMA_AWARENESS, schemaString, history);
                     finalSql = finalResponse.sql;
                     finalText = finalResponse.text;
+
+                    // --- THE CRITIC STEP (Quality Assurance) ---
+                    if (finalSql) {
+                        sendLog("Draft SQL generated. Running Quality Assurance...");
+                        try {
+                            const critique = await verifySQL(llm, query, finalSql, schemaBlock + schemaString);
+
+                            if (critique.status === "FAIL") {
+                                sendLog(`Critic rejected the query: Fixing logic...`);
+                                console.log("[Critic Fix] Old:", finalSql);
+                                console.log("[Critic Fix] New:", critique.improved_sql);
+
+                                // Adopt the fix if provided
+                                if (critique.improved_sql) {
+                                    finalSql = critique.improved_sql;
+                                }
+                            } else {
+                                sendLog("Critic passed the query.");
+                            }
+                        } catch (criticErr) {
+                            console.warn("[Critic Loop] Failed:", criticErr.message);
+                            sendLog("Critic unavailable, proceeding with draft.");
+                        }
+                    }
 
                 } catch (e) {
                     console.error("[Investigate] Failed:", e.message);
@@ -149,11 +180,17 @@ router.post('/', async (req, res) => {
         // --- GENERATE INSIGHTS (If Think Mode used) ---
         if (think && finalSql && finalResults.length > 0) {
             sendLog("Generating deep insights...");
+
+            // NEW: Inject SQL and Query into the prompt
+            const contextPrompt = THINK_PROMPT
+                .replace("{{USER_QUERY}}", query)
+                .replace("{{FINAL_SQL}}", finalSql);
+
             const insightResponse = await generateThinkResponse(
                 llm,
                 query,
                 finalResults.slice(0, 100),
-                THINK_PROMPT,
+                contextPrompt,
                 schemaBlock || "Full Schema Context"
             );
             finalText = insightResponse.text;

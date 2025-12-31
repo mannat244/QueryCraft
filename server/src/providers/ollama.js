@@ -54,3 +54,21 @@ export async function generateThinkResponse(query, results, prompt, schema) {
         return { text: "Failed to generate insights due to an error." };
     }
 }
+
+export async function verifySQL(messages) {
+    try {
+        const response = await ollama.chat({
+            model: process.env.LOCAL_MODEL || 'llama2',
+            messages: messages,
+            format: "json", // Enforce JSON
+            options: { temperature: 0.1 } // Strict
+        });
+
+        console.log("[Ollama Provider] Critic Response:", response.message.content);
+        return JSON.parse(response.message.content);
+
+    } catch (error) {
+        console.error("[Ollama Provider] Critic Error:", error);
+        return { status: "PASS", reason: "Critic unavailable" };
+    }
+}
